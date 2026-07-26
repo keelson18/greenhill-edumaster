@@ -9,8 +9,10 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
+import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+
 
 function NotFoundComponent() {
   return (
@@ -77,15 +79,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "EduMaster | CBC School Management System" },
+      {
+        name: "description",
+        content:
+          "EduMaster is a CBC school management system for Kenyan schools: students, exams, fees in KES, attendance and staff from PP1 to Grade 9.",
+      },
+      { name: "author", content: "EduMaster" },
+      { property: "og:title", content: "EduMaster | CBC School Management System" },
+      {
+        property: "og:description",
+        content: "Manage students, CBC examinations, fees and staff for Kenyan schools.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
+
     links: [
       {
         rel: "stylesheet",
@@ -121,6 +130,8 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <Toaster position="top-right" richColors />
     </QueryClientProvider>
   );
 }
+
