@@ -13,6 +13,7 @@ import { Route as TransportRouteImport } from './routes/transport'
 import { Route as TimetableRouteImport } from './routes/timetable'
 import { Route as TeachersRouteImport } from './routes/teachers'
 import { Route as StudentsRouteImport } from './routes/students'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PayrollRouteImport } from './routes/payroll'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as InventoryRouteImport } from './routes/inventory'
@@ -39,6 +40,11 @@ const TeachersRoute = TeachersRouteImport.update({
 const StudentsRoute = StudentsRouteImport.update({
   id: '/students',
   path: '/students',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PayrollRoute = PayrollRouteImport.update({
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/library': typeof LibraryRoute
   '/payroll': typeof PayrollRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/students': typeof StudentsRoute
   '/teachers': typeof TeachersRoute
   '/timetable': typeof TimetableRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/inventory': typeof InventoryRoute
   '/library': typeof LibraryRoute
   '/payroll': typeof PayrollRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/students': typeof StudentsRoute
   '/teachers': typeof TeachersRoute
   '/timetable': typeof TimetableRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/library': typeof LibraryRoute
   '/payroll': typeof PayrollRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/students': typeof StudentsRoute
   '/teachers': typeof TeachersRoute
   '/timetable': typeof TimetableRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/library'
     | '/payroll'
+    | '/sitemap.xml'
     | '/students'
     | '/teachers'
     | '/timetable'
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/library'
     | '/payroll'
+    | '/sitemap.xml'
     | '/students'
     | '/teachers'
     | '/timetable'
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/library'
     | '/payroll'
+    | '/sitemap.xml'
     | '/students'
     | '/teachers'
     | '/timetable'
@@ -167,6 +179,7 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   LibraryRoute: typeof LibraryRoute
   PayrollRoute: typeof PayrollRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StudentsRoute: typeof StudentsRoute
   TeachersRoute: typeof TeachersRoute
   TimetableRoute: typeof TimetableRoute
@@ -201,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/students'
       fullPath: '/students'
       preLoaderRoute: typeof StudentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payroll': {
@@ -263,6 +283,7 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   LibraryRoute: LibraryRoute,
   PayrollRoute: PayrollRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   StudentsRoute: StudentsRoute,
   TeachersRoute: TeachersRoute,
   TimetableRoute: TimetableRoute,
