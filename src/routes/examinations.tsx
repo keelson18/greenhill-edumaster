@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Sparkles, FileDown, Plus, Save, Trophy, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
@@ -12,6 +12,15 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -28,16 +37,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  EXAMS,
   GRADES,
   SUBJECTS,
   SCHOOL,
-  marksFor,
+  examsFor,
+  marksForTerm,
   cbcLevel,
   CBC_LABEL,
+  type Exam,
   type CbcLevel,
   type Grade,
 } from "@/lib/edumaster-data";
+import { useTerm } from "@/lib/term-context";
+import { TermSelect } from "@/components/TermSelect";
 
 export const Route = createFileRoute("/examinations")({
   head: () => ({
@@ -46,12 +58,12 @@ export const Route = createFileRoute("/examinations")({
       {
         name: "description",
         content:
-          "Compile CBC exams, enter marks with live totals, rank results and generate competency-based report cards for PP1 to Grade 9 learners.",
+          "Compile CBC exams per academic term, enter marks with live totals, rank results and generate competency-based report cards for PP1 to Grade 9 learners.",
       },
       { property: "og:title", content: "Examinations & CBC Marks Entry | EduMaster" },
       {
         property: "og:description",
-        content: "Marks entry, ranking, AI exam compiler and CBC report cards in one module.",
+        content: "Term-based marks entry, ranking, AI exam compiler and CBC report cards.",
       },
     ],
   }),
@@ -68,20 +80,41 @@ const levelClass: Record<CbcLevel, string> = {
 function LevelBadge({ pct }: { pct: number }) {
   const l = cbcLevel(pct);
   return (
-    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${levelClass[l]}`} title={CBC_LABEL[l]}>
+    <span
+      className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${levelClass[l]}`}
+      title={CBC_LABEL[l]}
+    >
       {l}
     </span>
   );
 }
 
-function ExamsPage() {
-  const [grade, setGrade] = useState<Grade>("Grade 7");
-  const [rows, setRows] = useState(() => marksFor("Grade 7"));
+function downloadFile(name: string, content: string, type = "text/csv;charset=utf-8") {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
-  const changeGrade = (g: Grade) => {
-    setGrade(g);
-    setRows(marksFor(g));
-  };
+function ExamsPage() {
+  const { term, termId } = useTerm();
+  const [grade, setGrade] = useState<Grade>("Grade 7");
+  const [rows, setRows] = useState(() => marksForTerm("Grade 7", termId));
+  const [saved, setSaved] = useState(true);
+  const [extraExams, setExtraExams] = useState<Exam[]>([]);
+  const [reportStudentId, setReportStudentId] = useState<string | null>(null);
+
+  // Reload marks whenever the term or grade changes.
+  useEffect(() => {
+    setRows(marksForTerm(grade, termId));
+    setSaved(true);
+    setReportStudentId(null);
+    setExtraExams([]);
+  }, [grade, termId]);
+
+  const exams = useMemo(() => [...extraExams, ...examsFor(termId)], [extraExams, termId]);
 
   const computed = useMemo(() => {
     const withTotals = rows.map((r) => {
@@ -102,21 +135,63 @@ function ExamsPage() {
 
   const setMark = (studentId: string, subject: string, value: string) => {
     const v = Math.max(0, Math.min(100, Number(value) || 0));
+    setSaved(false);
     setRows((prev) =>
       prev.map((r) => (r.studentId === studentId ? { ...r, marks: { ...r.marks, [subject]: v } } : r)),
     );
   };
 
-  const top = computed.ranked[0];
+  const reportLearner =
+    computed.ranked.find((r) => r.studentId === reportStudentId) ?? computed.ranked[0];
+  const reportPosition = reportLearner
+    ? computed.ranked.findIndex((r) => r.studentId === reportLearner.studentId) + 1
+    : 0;
+
+  const exportRanking = () => {
+    const header = ["Position", "Learner", "Adm", ...SUBJECTS, "Total", "%", "CBC"];
+    const body = computed.ranked.map((r, i) => [
+      i + 1,
+      r.name,
+      r.adm,
+      ...SUBJECTS.map((s) => r.marks[s]),
+      r.total,
+      r.pct,
+      cbcLevel(r.pct),
+    ]);
+    downloadFile(
+      `${grade.replace(/\s/g, "-")}-${term.id}-ranking.csv`,
+      [header, ...body].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n"),
+    );
+    toast.success(`${grade} ranking exported for ${term.label}`);
+  };
+
+  const exportBulkReports = () => {
+    const lines = computed.ranked.map(
+      (r, i) =>
+        `${SCHOOL.name} | ${term.label} | ${grade}\n${r.name} (${r.adm}) — Position ${i + 1} of ${computed.ranked.length}\n` +
+        SUBJECTS.map((s) => `  ${s}: ${r.marks[s]} (${cbcLevel(r.marks[s])})`).join("\n") +
+        `\n  Mean: ${r.pct}% (${CBC_LABEL[cbcLevel(r.pct)]})\n`,
+    );
+    downloadFile(
+      `${grade.replace(/\s/g, "-")}-${term.id}-report-cards.txt`,
+      lines.join("\n"),
+      "text/plain;charset=utf-8",
+    );
+    toast.success(`${computed.ranked.length} ${term.label} report cards generated for ${grade}`);
+  };
 
   return (
     <AppLayout
       title="Examinations"
-      subtitle="Compile assessments, capture marks and publish CBC report cards."
+      subtitle={`Compile assessments, capture marks and publish CBC report cards for ${term.label}.`}
       actions={
-        <Button onClick={() => toast.info("New examination wizard opened")}>
-          <Plus className="mr-1.5 size-4" /> New examination
-        </Button>
+        <NewExamDialog
+          termLabel={term.label}
+          onCreate={(exam) => {
+            setExtraExams((p) => [exam, ...p]);
+            toast.success(`${exam.name} created for ${term.label}`);
+          }}
+        />
       }
     >
       <Tabs defaultValue="exams" className="space-y-4">
@@ -132,7 +207,11 @@ function ExamsPage() {
         {/* Examinations list */}
         <TabsContent value="exams">
           <Card>
-            <CardContent className="px-0">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 pb-2">
+              <CardTitle className="text-base">{term.label} examinations</CardTitle>
+              <TermSelect />
+            </CardHeader>
+            <CardContent className="overflow-x-auto px-0">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -145,7 +224,7 @@ function ExamsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {EXAMS.map((e) => (
+                  {exams.map((e) => (
                     <TableRow key={e.id}>
                       <TableCell>
                         <p className="font-medium">{e.name}</p>
@@ -161,7 +240,10 @@ function ExamsPage() {
                         <span className="text-xs text-muted-foreground">{e.entered}%</span>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={e.status === "Active" ? "default" : "secondary"} className="rounded-full">
+                        <Badge
+                          variant={e.status === "Active" ? "default" : "secondary"}
+                          className="rounded-full"
+                        >
                           {e.status}
                         </Badge>
                       </TableCell>
@@ -177,7 +259,9 @@ function ExamsPage() {
         <TabsContent value="compilation">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {SUBJECTS.map((s, i) => {
-              const done = [100, 92, 78, 64, 55, 40, 25][i] ?? 50;
+              const base = [100, 92, 78, 64, 55, 40, 25][i] ?? 50;
+              const done =
+                term.status === "Upcoming" ? 0 : term.status === "Closed" ? 100 : base;
               return (
                 <Card key={s}>
                   <CardHeader className="pb-2">
@@ -187,7 +271,7 @@ function ExamsPage() {
                     <Progress value={done} className="h-2" />
                     <p className="text-xs text-muted-foreground">{done}% of streams submitted</p>
                     <Badge variant="secondary" className="rounded-full text-[11px]">
-                      {done === 100 ? "Moderated" : "Awaiting entry"}
+                      {done === 100 ? "Moderated" : done === 0 ? "Not started" : "Awaiting entry"}
                     </Badge>
                   </CardContent>
                 </Card>
@@ -201,14 +285,15 @@ function ExamsPage() {
           <Card>
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-base">Marks Entry — Term 2 Mid-Term Assessment</CardTitle>
+                <CardTitle className="text-base">Marks Entry — {term.label}</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Class mean: <span className="font-semibold text-foreground">{classMean}%</span> ·{" "}
-                  {computed.withTotals.length} learners
+                  {computed.withTotals.length} learners · {saved ? "All changes saved" : "Unsaved changes"}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Select value={grade} onValueChange={(v) => changeGrade(v as Grade)}>
+              <div className="flex flex-wrap items-center gap-2">
+                <TermSelect />
+                <Select value={grade} onValueChange={(v) => setGrade(v as Grade)}>
                   <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>
@@ -220,8 +305,14 @@ function ExamsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={() => toast.success("Marks saved and submitted for moderation")}>
-                  <Save className="mr-1.5 size-4" /> Save marks
+                <Button
+                  disabled={saved}
+                  onClick={() => {
+                    setSaved(true);
+                    toast.success(`${grade} marks saved for ${term.label}`);
+                  }}
+                >
+                  <Save className="mr-1.5 size-4" /> {saved ? "Saved" : "Save marks"}
                 </Button>
               </div>
             </CardHeader>
@@ -276,8 +367,8 @@ function ExamsPage() {
         <TabsContent value="results">
           <div className="mb-4 grid gap-4 sm:grid-cols-3">
             {[
-              { label: "Class mean", value: `${classMean}%` },
-              { label: "Top learner", value: top?.name ?? "—" },
+              { label: `Class mean (${term.short})`, value: `${classMean}%` },
+              { label: "Top learner", value: computed.ranked[0]?.name ?? "—" },
               {
                 label: "Below Expectation",
                 value: String(computed.withTotals.filter((r) => cbcLevel(r.pct) === "BE").length),
@@ -292,10 +383,27 @@ function ExamsPage() {
             ))}
           </div>
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Trophy className="size-4 text-primary" /> {grade} Ranking
+                <Trophy className="size-4 text-primary" /> {grade} Ranking — {term.label}
               </CardTitle>
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={grade} onValueChange={(v) => setGrade(v as Grade)}>
+                  <SelectTrigger className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GRADES.map((g) => (
+                      <SelectItem key={g} value={g}>
+                        {g}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" onClick={exportRanking}>
+                  <FileDown className="mr-1.5 size-4" /> Export CSV
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="overflow-x-auto px-0">
               <Table>
@@ -338,7 +446,7 @@ function ExamsPage() {
 
         {/* AI compiler */}
         <TabsContent value="ai">
-          <AiCompiler />
+          <AiCompiler termLabel={term.label} />
         </TabsContent>
 
         {/* Report cards */}
@@ -350,8 +458,12 @@ function ExamsPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-1.5">
+                  <Label>Term</Label>
+                  <TermSelect className="w-full rounded-md" />
+                </div>
+                <div className="space-y-1.5">
                   <Label>Grade</Label>
-                  <Select value={grade} onValueChange={(v) => changeGrade(v as Grade)}>
+                  <Select value={grade} onValueChange={(v) => setGrade(v as Grade)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -364,42 +476,64 @@ function ExamsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button className="w-full" onClick={() => toast.success("Single report card generated")}>
-                  <Printer className="mr-1.5 size-4" /> Generate single
-                </Button>
+                <div className="space-y-1.5">
+                  <Label>Learner</Label>
+                  <Select
+                    value={reportLearner?.studentId ?? ""}
+                    onValueChange={setReportStudentId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select learner" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {computed.ranked.map((r) => (
+                        <SelectItem key={r.studentId} value={r.studentId}>
+                          {r.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button
-                  variant="outline"
                   className="w-full"
-                  onClick={() => toast.success(`Bulk report cards queued for ${grade}`)}
+                  onClick={() => {
+                    if (typeof window !== "undefined") window.print();
+                    toast.success(`${reportLearner?.name} · ${term.label} report card ready to print`);
+                  }}
                 >
+                  <Printer className="mr-1.5 size-4" /> Print single
+                </Button>
+                <Button variant="outline" className="w-full" onClick={exportBulkReports}>
                   <FileDown className="mr-1.5 size-4" /> Generate bulk ({computed.withTotals.length})
                 </Button>
               </CardContent>
             </Card>
 
-            {top && (
+            {reportLearner && (
               <Card className="overflow-hidden">
                 <div className="bg-primary px-6 py-5 text-primary-foreground">
                   <p className="text-lg font-semibold">{SCHOOL.name}</p>
                   <p className="text-xs opacity-80">
-                    CBC Learner Progress Report · {SCHOOL.term}
+                    CBC Learner Progress Report · {term.label} · {term.window}
                   </p>
                 </div>
                 <CardContent className="space-y-4 p-6">
-                  <div className="grid gap-2 sm:grid-cols-3 text-sm">
+                  <div className="grid gap-2 text-sm sm:grid-cols-3">
                     <div>
                       <p className="text-xs text-muted-foreground">Learner</p>
-                      <p className="font-medium">{top.name}</p>
+                      <p className="font-medium">{reportLearner.name}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Adm / Grade</p>
                       <p className="font-medium">
-                        {top.adm} · {grade}
+                        {reportLearner.adm} · {grade}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Position</p>
-                      <p className="font-medium">1 out of {computed.ranked.length}</p>
+                      <p className="font-medium">
+                        {reportPosition} out of {computed.ranked.length}
+                      </p>
                     </div>
                   </div>
 
@@ -414,7 +548,7 @@ function ExamsPage() {
                     </TableHeader>
                     <TableBody>
                       {SUBJECTS.map((s) => {
-                        const m = top.marks[s];
+                        const m = reportLearner.marks[s];
                         const l = cbcLevel(m);
                         return (
                           <TableRow key={s}>
@@ -435,9 +569,10 @@ function ExamsPage() {
                   <div className="rounded-xl bg-muted p-4 text-sm">
                     <p className="font-semibold">Class teacher's comment</p>
                     <p className="text-muted-foreground">
-                      {top.name.split(" ")[0]} demonstrates strong competency across most learning
-                      areas with a mean of {top.pct}%. Keep nurturing enquiry and collaboration
-                      skills next term.
+                      {reportLearner.name.split(" ")[0]} finished {term.label} with a mean of{" "}
+                      {reportLearner.pct}% ({CBC_LABEL[cbcLevel(reportLearner.pct)]}), ranked{" "}
+                      {reportPosition} out of {computed.ranked.length} in {grade}. Keep nurturing
+                      enquiry and collaboration skills next term.
                     </p>
                   </div>
                 </CardContent>
@@ -450,21 +585,183 @@ function ExamsPage() {
   );
 }
 
-function AiCompiler() {
-  const [generated, setGenerated] = useState(false);
+function NewExamDialog({
+  termLabel,
+  onCreate,
+}: {
+  termLabel: string;
+  onCreate: (exam: Exam) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [grades, setGrades] = useState("PP1 – Grade 9");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+
+  const submit = () => {
+    if (!name.trim()) {
+      toast.error("Give the examination a name");
+      return;
+    }
+    onCreate({
+      id: `custom-${Date.now()}`,
+      name: name.trim(),
+      term: termLabel,
+      grades,
+      subjects: SUBJECTS.length,
+      start: start || "TBD",
+      end: end || "TBD",
+      status: "Draft",
+      entered: 0,
+    });
+    setName("");
+    setStart("");
+    setEnd("");
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="mr-1.5 size-4" /> New examination
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New examination</DialogTitle>
+          <DialogDescription>This assessment will be created under {termLabel}.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="exam-name">Examination name</Label>
+            <Input
+              id="exam-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. End-Term Examination"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="exam-grades">Grades</Label>
+            <Input id="exam-grades" value={grades} onChange={(e) => setGrades(e.target.value)} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="exam-start">Start</Label>
+              <Input id="exam-start" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="exam-end">End</Label>
+              <Input id="exam-end" type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={submit}>Create examination</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const QUESTION_BANK: Record<string, string[]> = {
+  Mathematics: [
+    "Express 3/8 as a decimal and as a percentage. (3 marks)",
+    "A farm in Kiambu measures 42 m by 28 m. Calculate its perimeter and area. (4 marks)",
+    "A shopkeeper sold goods worth KES 12,480 in a week. Find the daily average. (3 marks)",
+    "Arrange 0.45, 2/5, 48% in ascending order. (3 marks)",
+    "The table shows learners per stream. Draw a bar graph and state the mode. (5 marks)",
+    "Find the volume of a cuboid 12 cm by 8 cm by 5 cm. (3 marks)",
+  ],
+  English: [
+    "Rewrite in the passive voice: 'The teacher marked the books.' (2 marks)",
+    "Give the plural of: child, knife, sheep, hero. (4 marks)",
+    "Write a composition on 'A Day at the Market' (100 words). (10 marks)",
+    "Identify the adverbs in the passage below. (4 marks)",
+    "Punctuate the sentence correctly. (3 marks)",
+    "Use the idiom 'to bury the hatchet' in a sentence. (2 marks)",
+  ],
+  Kiswahili: [
+    "Andika sentensi hii katika wakati uliopita. (2 alama)",
+    "Eleza maana ya methali: 'Haraka haraka haina baraka.' (3 alama)",
+    "Taja vitenzi vitatu katika kifungu hiki. (3 alama)",
+    "Andika insha kuhusu 'Umuhimu wa Elimu'. (10 alama)",
+    "Tunga sentensi ukitumia neno 'shwari'. (2 alama)",
+    "Bainisha nomino katika sentensi ifuatayo. (3 alama)",
+  ],
+};
+
+function AiCompiler({ termLabel }: { termLabel: string }) {
+  const [grade, setGrade] = useState<string>("Grade 7");
+  const [subject, setSubject] = useState<string>("Mathematics");
+  const [difficulty, setDifficulty] = useState("Moderate");
+  const [count, setCount] = useState(30);
+  const [topics, setTopics] = useState(
+    "Fractions, Decimals, Measurement (Area & Perimeter), Data Handling",
+  );
+  const [outputs, setOutputs] = useState<string[]>([
+    "Question paper (PDF)",
+    "Marking scheme",
+    "Answer sheets",
+  ]);
+  const [paper, setPaper] = useState<null | { questions: string[] }>(null);
+  const [busy, setBusy] = useState(false);
+
+  const toggleOutput = (o: string, on: boolean) =>
+    setOutputs((prev) => (on ? [...new Set([...prev, o])] : prev.filter((x) => x !== o)));
+
+  const generate = () => {
+    setBusy(true);
+    const bank = QUESTION_BANK[subject] ?? QUESTION_BANK.Mathematics;
+    const topicList = topics
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    const questions = Array.from({ length: Math.min(8, Math.max(3, Math.round(count / 5))) }, (_, i) =>
+      i < bank.length
+        ? bank[i]
+        : `Question on ${topicList[i % Math.max(1, topicList.length)] ?? subject}: solve and show your working. (4 marks)`,
+    );
+    window.setTimeout(() => {
+      setPaper({ questions });
+      setBusy(false);
+      toast.success(`${subject} paper compiled for ${grade} · ${termLabel}`);
+    }, 600);
+  };
+
+  const downloadPaper = (kind: "paper" | "scheme") => {
+    if (!paper) return;
+    const body =
+      kind === "paper"
+        ? paper.questions.map((q, i) => `${i + 1}. ${q}`).join("\n\n")
+        : paper.questions
+            .map((q, i) => `${i + 1}. ${q}\n   Answer: award marks for correct method and final answer.`)
+            .join("\n\n");
+    downloadFile(
+      `${grade.replace(/\s/g, "-")}-${subject}-${kind}.txt`,
+      `${SCHOOL.name}\n${grade} · ${subject} · ${termLabel}\n${count} questions · ${difficulty}\n\n${body}\n`,
+      "text/plain;charset=utf-8",
+    );
+    toast.success(kind === "paper" ? "Question paper downloaded" : "Marking scheme downloaded");
+  };
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Sparkles className="size-4 text-primary" /> AI Exam Compiler
+            <Sparkles className="size-4 text-primary" /> AI Exam Compiler · {termLabel}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Grade</Label>
-              <Select defaultValue="Grade 7">
+              <Select value={grade} onValueChange={setGrade}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -479,7 +776,7 @@ function AiCompiler() {
             </div>
             <div className="space-y-1.5">
               <Label>Subject</Label>
-              <Select defaultValue="Mathematics">
+              <Select value={subject} onValueChange={setSubject}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -494,7 +791,7 @@ function AiCompiler() {
             </div>
             <div className="space-y-1.5">
               <Label>Difficulty</Label>
-              <Select defaultValue="Moderate">
+              <Select value={difficulty} onValueChange={setDifficulty}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -508,33 +805,37 @@ function AiCompiler() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Number of questions</Label>
-              <Input type="number" defaultValue={30} min={5} max={100} />
+              <Label htmlFor="q-count">Number of questions</Label>
+              <Input
+                id="q-count"
+                type="number"
+                value={count}
+                min={5}
+                max={100}
+                onChange={(e) =>
+                  setCount(Math.max(5, Math.min(100, Number(e.target.value) || 5)))
+                }
+              />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Topics / strands</Label>
-            <Textarea
-              rows={3}
-              defaultValue="Fractions, Decimals, Measurement (Area & Perimeter), Data Handling"
-            />
+            <Label htmlFor="topics">Topics / strands</Label>
+            <Textarea id="topics" rows={3} value={topics} onChange={(e) => setTopics(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label>Output options</Label>
             {["Question paper (PDF)", "Marking scheme", "Answer sheets"].map((o) => (
               <label key={o} className="flex items-center gap-2 text-sm">
-                <Checkbox defaultChecked /> {o}
+                <Checkbox
+                  checked={outputs.includes(o)}
+                  onCheckedChange={(v) => toggleOutput(o, v === true)}
+                />{" "}
+                {o}
               </label>
             ))}
           </div>
-          <Button
-            className="w-full"
-            onClick={() => {
-              setGenerated(true);
-              toast.success("Exam paper compiled");
-            }}
-          >
-            <Sparkles className="mr-1.5 size-4" /> Generate exam
+          <Button className="w-full" disabled={busy} onClick={generate}>
+            <Sparkles className="mr-1.5 size-4" /> {busy ? "Compiling…" : "Generate exam"}
           </Button>
         </CardContent>
       </Card>
@@ -544,36 +845,35 @@ function AiCompiler() {
           <CardTitle className="text-base">Preview</CardTitle>
         </CardHeader>
         <CardContent>
-          {!generated ? (
+          {!paper ? (
             <p className="py-16 text-center text-sm text-muted-foreground">
               Configure the paper and click generate to preview questions here.
             </p>
           ) : (
             <div className="space-y-3 text-sm">
               <div className="rounded-xl border border-border p-4">
-                <p className="font-semibold">Grade 7 · Mathematics · Term 2 CAT</p>
+                <p className="font-semibold">
+                  {grade} · {subject} · {termLabel}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  30 questions · Moderate · Duration 1 hr 30 min
+                  {count} questions · {difficulty} · Duration 1 hr 30 min
                 </p>
               </div>
               <ol className="list-decimal space-y-2 pl-5 text-muted-foreground">
-                <li>Express 3/8 as a decimal and as a percentage. (3 marks)</li>
-                <li>
-                  A farm in Kiambu measures 42 m by 28 m. Calculate its perimeter and area. (4 marks)
-                </li>
-                <li>
-                  A shopkeeper sold goods worth KES 12,480 in a week. Find the daily average. (3 marks)
-                </li>
-                <li>Arrange 0.45, 2/5, 48% in ascending order. (3 marks)</li>
-                <li>
-                  The table shows learners per stream. Draw a bar graph and state the mode. (5 marks)
-                </li>
+                {paper.questions.map((q) => (
+                  <li key={q}>{q}</li>
+                ))}
               </ol>
-              <div className="flex gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => toast.success("PDF downloaded")}>
-                  <FileDown className="mr-1.5 size-4" /> Download PDF
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => downloadPaper("paper")}>
+                  <FileDown className="mr-1.5 size-4" /> Download paper
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => toast.success("Marking scheme ready")}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!outputs.includes("Marking scheme")}
+                  onClick={() => downloadPaper("scheme")}
+                >
                   Marking scheme
                 </Button>
               </div>
