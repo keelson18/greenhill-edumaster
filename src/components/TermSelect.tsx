@@ -14,7 +14,7 @@ export function TermSelect({ className }: { className?: string }) {
   return (
     <Select value={termId} onValueChange={setTermId}>
       <SelectTrigger
-        className={cn("h-9 w-[190px] rounded-full bg-card", className)}
+        className={cn("h-9 w-[215px] rounded-full bg-card", className)}
         aria-label="Academic term"
       >
         <CalendarRange className="size-4 shrink-0 text-muted-foreground" />
