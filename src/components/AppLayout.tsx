@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 import { SCHOOL } from "@/lib/edumaster-data";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { TermSelect } from "@/components/TermSelect";
+import { useTerm } from "@/lib/term-context";
 
 const NAV = [
   { group: "Overview", items: [{ to: "/", label: "Dashboard", icon: LayoutDashboard }] },
@@ -58,6 +60,7 @@ export function AppLayout({
   children: ReactNode;
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const { term } = useTerm();
   const [open, setOpen] = useState(false);
 
   return (
@@ -115,7 +118,8 @@ export function AppLayout({
         </nav>
 
         <div className="mx-3 mb-4 rounded-xl bg-sidebar-accent/70 p-3">
-          <p className="text-xs font-semibold text-sidebar-accent-foreground">{SCHOOL.term}</p>
+          <p className="text-xs font-semibold text-sidebar-accent-foreground">{term.label}</p>
+          <p className="text-[11px] text-sidebar-foreground/70">{term.window} · {term.status}</p>
           <p className="mt-1 text-[11px] text-sidebar-foreground/70">{SCHOOL.motto}</p>
         </div>
       </aside>
@@ -139,6 +143,7 @@ export function AppLayout({
               />
             </div>
             <div className="ml-auto flex items-center gap-3">
+              <TermSelect className="hidden sm:flex" />
               <button className="relative rounded-full border border-border bg-card p-2" aria-label="Notifications">
                 <Bell className="size-4 text-muted-foreground" />
                 <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-destructive" />
@@ -163,12 +168,15 @@ export function AppLayout({
               <div className="mb-1 flex items-center gap-2">
                 <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
                 <Badge variant="secondary" className="rounded-full text-[10px]">
-                  {SCHOOL.term}
+                  {term.label}
                 </Badge>
               </div>
               {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
             </div>
-            {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+            <div className="flex flex-wrap items-center gap-2">
+              <TermSelect className="sm:hidden" />
+              {actions}
+            </div>
           </div>
           {children}
         </main>

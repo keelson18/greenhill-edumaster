@@ -37,17 +37,29 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  KPIS,
   KES,
   SCHOOL,
-  feeTrend,
+  kpisFor,
+  feeTrendFor,
   genderSplit,
-  weeklyAttendance,
-  performanceByGrade,
+  weeklyAttendanceFor,
+  performanceForTerm,
   recentPayments,
   notifications,
   upcomingEvents,
 } from "@/lib/edumaster-data";
+import { useTerm } from "@/lib/term-context";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -69,14 +81,6 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-const KPI = [
-  { label: "Total Students", value: KPIS.totalStudents.toLocaleString(), delta: "+34 this term", icon: Users },
-  { label: "Teaching Staff", value: String(KPIS.staff), delta: "3 on leave", icon: UserCog },
-  { label: "Fees Collected", value: KES(KPIS.collected), delta: `${KES(KPIS.outstanding)} outstanding`, icon: Wallet },
-  { label: "Avg. Attendance", value: `${KPIS.attendance}%`, delta: "+1.4% vs last week", icon: CalendarCheck },
-  { label: "Active Exams", value: String(KPIS.activeExams), delta: "62% marks entered", icon: FileText },
-  { label: "School Mean Score", value: `${KPIS.meanScore}%`, delta: "Meeting Expectation", icon: TrendingUp },
-];
 
 const PIE_COLORS = ["var(--chart-1)", "var(--chart-3)"];
 
@@ -88,14 +92,76 @@ const tooltipStyle = {
 };
 
 function Dashboard() {
+  const { term, termId } = useTerm();
+  const navigate = useNavigate();
+
+  const kpis = useMemo(() => kpisFor(termId), [termId]);
+  const fees = useMemo(() => feeTrendFor(termId), [termId]);
+  const attendance = useMemo(() => weeklyAttendanceFor(termId), [termId]);
+  const performance = useMemo(() => performanceForTerm(termId), [termId]);
+
+  const KPI = [
+    { label: "Total Students", value: kpis.totalStudents.toLocaleString(), delta: `Enrolled in ${term.label}`, icon: Users },
+    { label: "Teaching Staff", value: String(kpis.staff), delta: "3 on leave", icon: UserCog },
+    { label: "Fees Collected", value: KES(kpis.collected), delta: `${KES(kpis.outstanding)} outstanding`, icon: Wallet },
+    { label: "Avg. Attendance", value: `${kpis.attendance}%`, delta: `${term.window}`, icon: CalendarCheck },
+    { label: "Active Exams", value: String(kpis.activeExams), delta: `${kpis.marksEntered}% marks entered`, icon: FileText },
+    { label: "School Mean Score", value: `${kpis.meanScore}%`, delta: kpis.meanScore >= 65 ? "Meeting Expectation" : "Approaching Expectation", icon: TrendingUp },
+  ];
+
+  const downloadTermReport = () => {
+    const rows = [
+      ["Metric", "Value"],
+      ["Term", term.label],
+      ["Students", String(kpis.totalStudents)],
+      ["Staff", String(kpis.staff)],
+      ["Fees collected (KES)", String(Math.round(kpis.collected))],
+      ["Fees outstanding (KES)", String(Math.round(kpis.outstanding))],
+      ["Attendance (%)", String(kpis.attendance)],
+      ["Mean score (%)", String(kpis.meanScore)],
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `edumaster-${term.id}-summary.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${term.label} report downloaded`);
+  };
+
   return (
     <AppLayout
       title={`Good morning, ${SCHOOL.principal}`}
-      subtitle="Here's how Greenhill Academy is performing today, 26 July 2026."
+      subtitle={`Greenhill Academy performance for ${term.label} (${term.window}).`}
       actions={
         <>
-          <Button variant="outline">Download term report</Button>
-          <Button>Quick actions</Button>
+          <Button variant="outline" onClick={downloadTermReport}>
+            Download term report
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>Quick actions</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>{term.label}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate({ to: "/examinations" })}>
+                Enter exam marks
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: "/examinations" })}>
+                Generate report cards
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: "/students" })}>
+                Admit a learner
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: "/fees" })}>
+                Record fee payment
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={downloadTermReport}>Export term summary</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </>
       }
     >
@@ -141,11 +207,11 @@ function Dashboard() {
       <div className="mb-6 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Fee Collection (KES millions)</CardTitle>
+            <CardTitle className="text-base">Fee Collection — {term.label} (KES millions)</CardTitle>
           </CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={feeTrend} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+              <LineChart data={fees} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
                 <YAxis tickLine={false} axisLine={false} fontSize={12} />
@@ -183,7 +249,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyAttendance} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+              <BarChart data={attendance} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={12} />
                 <YAxis tickLine={false} axisLine={false} fontSize={12} />
@@ -201,14 +267,14 @@ function Dashboard() {
           </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={performanceByGrade} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+              <LineChart data={performance} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="grade" tickLine={false} axisLine={false} fontSize={11} />
                 <YAxis domain={[40, 100]} tickLine={false} axisLine={false} fontSize={12} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
-                <Line type="monotone" dataKey="term1" stroke="var(--chart-4)" strokeWidth={2.5} dot={false} name="Term 1" />
-                <Line type="monotone" dataKey="term2" stroke="var(--chart-1)" strokeWidth={2.5} dot={false} name="Term 2" />
+                <Line type="monotone" dataKey="previous" stroke="var(--chart-4)" strokeWidth={2.5} dot={false} name={`Previous (${performance[0].previousLabel})`} />
+                <Line type="monotone" dataKey="current" stroke="var(--chart-1)" strokeWidth={2.5} dot={false} name={`Current (${performance[0].currentLabel})`} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>

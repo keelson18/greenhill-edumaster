@@ -252,3 +252,140 @@ export function marksFor(grade: Grade, count = 24): MarkRow[] {
       return { studentId: s.id, name: s.name, adm: s.adm, marks };
     });
 }
+
+// ---------- academic terms ----------
+export type Term = {
+  id: string;
+  label: string;
+  short: string;
+  year: number;
+  window: string;
+  status: "Closed" | "Current" | "Upcoming";
+};
+
+export const TERMS: Term[] = [
+  { id: "2025-t3", label: "Term 3, 2025", short: "T3 '25", year: 2025, window: "Sep – Nov 2025", status: "Closed" },
+  { id: "2026-t1", label: "Term 1, 2026", short: "T1 '26", year: 2026, window: "Jan – Apr 2026", status: "Closed" },
+  { id: "2026-t2", label: "Term 2, 2026", short: "T2 '26", year: 2026, window: "May – Aug 2026", status: "Current" },
+  { id: "2026-t3", label: "Term 3, 2026", short: "T3 '26", year: 2026, window: "Sep – Nov 2026", status: "Upcoming" },
+];
+
+export const CURRENT_TERM_ID = "2026-t2";
+
+export function getTerm(id: string): Term {
+  return TERMS.find((t) => t.id === id) ?? TERMS[2];
+}
+
+function termSeed(id: string) {
+  let h = 7;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+/** 0 for closed past terms, growing for recent ones. */
+function termIndex(id: string) {
+  return Math.max(0, TERMS.findIndex((t) => t.id === id));
+}
+
+export function kpisFor(termId: string) {
+  const t = getTerm(termId);
+  const i = termIndex(termId);
+  const rand = mulberry32(termSeed(termId));
+  const upcoming = t.status === "Upcoming";
+  const ratio = upcoming ? 0.08 : t.status === "Current" ? 0.72 : 0.97;
+  const billed = STUDENTS.reduce((s, x) => s + x.feeBilled, 0) * (0.92 + i * 0.03);
+  const collected = billed * ratio;
+  return {
+    term: t,
+    totalStudents: KPIS.totalStudents - (3 - i) * 11,
+    staff: 54 - (3 - i),
+    collected,
+    outstanding: billed - collected,
+    attendance: Math.round((91 + rand() * 4) * 10) / 10,
+    activeExams: upcoming ? 1 : t.status === "Current" ? 4 : 3,
+    meanScore: Math.round((63 + i * 1.8 + rand() * 3) * 10) / 10,
+    marksEntered: upcoming ? 0 : t.status === "Current" ? 62 : 100,
+  };
+}
+
+const TERM_MONTHS: Record<string, string[]> = {
+  "2025-t3": ["Sep", "Oct", "Nov"],
+  "2026-t1": ["Jan", "Feb", "Mar", "Apr"],
+  "2026-t2": ["May", "Jun", "Jul", "Aug"],
+  "2026-t3": ["Sep", "Oct", "Nov"],
+};
+
+export function feeTrendFor(termId: string) {
+  const rand = mulberry32(termSeed(termId));
+  const t = getTerm(termId);
+  return (TERM_MONTHS[termId] ?? TERM_MONTHS["2026-t2"]).map((month, idx) => {
+    const base = t.status === "Upcoming" ? 1.2 : 4.5 + idx * 1.1;
+    return {
+      month,
+      collected: Math.round((base + rand() * 2.4) * 10) / 10,
+      outstanding: Math.round((0.9 + rand() * 1.7) * 10) / 10,
+    };
+  });
+}
+
+export function performanceForTerm(termId: string) {
+  const i = termIndex(termId);
+  const prev = TERMS[Math.max(0, i - 1)];
+  const rand = mulberry32(termSeed(termId));
+  return GRADES.map((g, k) => ({
+    grade: g,
+    previous: 55 + ((k * 7 + i * 3) % 24) + Math.round(rand() * 4),
+    current: 58 + ((k * 5 + i * 5) % 26) + Math.round(rand() * 5),
+    previousLabel: prev.short,
+    currentLabel: getTerm(termId).short,
+  }));
+}
+
+export function weeklyAttendanceFor(termId: string) {
+  const rand = mulberry32(termSeed(termId) + 5);
+  return ["Mon", "Tue", "Wed", "Thu", "Fri"].map((day) => {
+    const absent = 14 + Math.round(rand() * 60);
+    return { day, present: 847 - absent, absent };
+  });
+}
+
+export function examsFor(termId: string): Exam[] {
+  const t = getTerm(termId);
+  const rand = mulberry32(termSeed(termId) + 11);
+  const templates =
+    t.status === "Upcoming"
+      ? [
+          { name: `${t.label.split(",")[0]} Opener CAT`, grades: "PP1 – Grade 9", subjects: 5, start: "14 Sep", end: "17 Sep", status: "Draft" as const },
+          { name: "Grade 9 KJSEA Mock 3", grades: "Grade 9", subjects: 7, start: "05 Oct", end: "09 Oct", status: "Draft" as const },
+        ]
+      : [
+          { name: `${t.label.split(",")[0]} Opener CAT`, grades: "PP1 – Grade 9", subjects: 5, start: "12 " + (TERM_MONTHS[termId]?.[0] ?? "May"), end: "15 " + (TERM_MONTHS[termId]?.[0] ?? "May"), status: "Completed" as const },
+          { name: `${t.label.split(",")[0]} Mid-Term Assessment`, grades: "Grade 4 – Grade 9", subjects: 7, start: "03 " + (TERM_MONTHS[termId]?.[1] ?? "Jun"), end: "07 " + (TERM_MONTHS[termId]?.[1] ?? "Jun"), status: t.status === "Current" ? ("Active" as const) : ("Completed" as const) },
+          { name: "Lower Primary Literacy Check", grades: "PP1 – Grade 3", subjects: 3, start: "29 " + (TERM_MONTHS[termId]?.[1] ?? "Jun"), end: "30 " + (TERM_MONTHS[termId]?.[1] ?? "Jun"), status: t.status === "Current" ? ("Marking" as const) : ("Completed" as const) },
+          { name: `${t.label.split(",")[0]} End-Term Examination`, grades: "PP1 – Grade 9", subjects: 7, start: "18 " + (TERM_MONTHS[termId]?.slice(-1)[0] ?? "Aug"), end: "22 " + (TERM_MONTHS[termId]?.slice(-1)[0] ?? "Aug"), status: t.status === "Current" ? ("Draft" as const) : ("Completed" as const) },
+        ];
+  return templates.map((x, i) => ({
+    id: `${termId}-ex-${i + 1}`,
+    term: t.label,
+    entered:
+      x.status === "Completed" ? 100 : x.status === "Draft" ? 0 : 30 + Math.round(rand() * 60),
+    ...x,
+  }));
+}
+
+/** Term-aware marks: same learners, term-specific scores. */
+export function marksForTerm(grade: Grade, termId: string, count = 24): MarkRow[] {
+  const drift = termIndex(termId) * 3 - 3;
+  const rand = mulberry32(
+    grade.length * 977 + grade.charCodeAt(grade.length - 1) + termSeed(termId),
+  );
+  return STUDENTS.filter((s) => s.grade === grade)
+    .slice(0, count)
+    .map((s) => {
+      const marks: Record<string, number> = {};
+      SUBJECTS.forEach((sub) => {
+        marks[sub] = Math.min(100, Math.max(20, Math.round(38 + drift + rand() * 58)));
+      });
+      return { studentId: s.id, name: s.name, adm: s.adm, marks };
+    });
+}
