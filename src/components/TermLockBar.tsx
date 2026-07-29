@@ -40,12 +40,12 @@ export function TermLockBar({
         {locked ? <Lock className="size-4" /> : <LockOpen className="size-4" />}
       </span>
       <div className="flex-1">
-        <p className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+        <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
           {term.label} is {locked ? "locked" : "open for editing"}
           <Badge variant="secondary" className="rounded-full text-[11px]">
             {term.status}
           </Badge>
-        </p>
+        </div>
         <p className="text-sm text-muted-foreground">
           {locked
             ? reason === "closed"
