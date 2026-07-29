@@ -389,3 +389,107 @@ export function marksForTerm(grade: Grade, termId: string, count = 24): MarkRow[
       return { studentId: s.id, name: s.name, adm: s.adm, marks };
     });
 }
+
+// ---------- term-to-term comparison ----------
+export type MetricKey =
+  | "totalStudents"
+  | "staff"
+  | "collected"
+  | "outstanding"
+  | "attendance"
+  | "meanScore";
+
+export type MetricDirection = "up-good" | "down-good";
+
+export type MetricDefinition = {
+  key: MetricKey;
+  label: string;
+  format: (value: number) => string;
+  direction: MetricDirection;
+};
+
+const pct1 = (n: number) => `${Math.round(n * 10) / 10}%`;
+const int0 = (n: number) => Math.round(n).toLocaleString("en-KE");
+
+export const COMPARISON_METRICS: MetricDefinition[] = [
+  { key: "totalStudents", label: "Enrolment", format: int0, direction: "up-good" },
+  { key: "staff", label: "Teaching staff", format: int0, direction: "up-good" },
+  { key: "collected", label: "Fees collected", format: KES, direction: "up-good" },
+  { key: "outstanding", label: "Fees outstanding", format: KES, direction: "down-good" },
+  { key: "attendance", label: "Avg. attendance", format: pct1, direction: "up-good" },
+  { key: "meanScore", label: "School mean score", format: pct1, direction: "up-good" },
+];
+
+export type MetricComparison = {
+  definition: MetricDefinition;
+  base: number;
+  target: number;
+  delta: number;
+  deltaPct: number;
+  improved: boolean;
+};
+
+export type GradeComparison = {
+  grade: string;
+  base: number;
+  target: number;
+  delta: number;
+};
+
+export type TermComparison = {
+  baseTerm: Term;
+  targetTerm: Term;
+  metrics: MetricComparison[];
+  grades: GradeComparison[];
+  improvedGrades: number;
+  declinedGrades: number;
+  meanDelta: number;
+};
+
+/** Compare two academic terms across headline KPIs and per-grade performance. */
+export function compareTerms(baseId: string, targetId: string): TermComparison {
+  const baseKpis = kpisFor(baseId);
+  const targetKpis = kpisFor(targetId);
+
+  const metrics = COMPARISON_METRICS.map<MetricComparison>((definition) => {
+    const base = baseKpis[definition.key];
+    const target = targetKpis[definition.key];
+    const delta = target - base;
+    const deltaPct = base === 0 ? 0 : (delta / base) * 100;
+    return {
+      definition,
+      base,
+      target,
+      delta,
+      deltaPct,
+      improved: definition.direction === "up-good" ? delta >= 0 : delta <= 0,
+    };
+  });
+
+  const basePerf = performanceForTerm(baseId);
+  const targetPerf = performanceForTerm(targetId);
+  const grades = GRADES.map<GradeComparison>((grade, i) => {
+    const base = basePerf[i].current;
+    const target = targetPerf[i].current;
+    return { grade, base, target, delta: target - base };
+  });
+
+  return {
+    baseTerm: getTerm(baseId),
+    targetTerm: getTerm(targetId),
+    metrics,
+    grades,
+    improvedGrades: grades.filter((g) => g.delta > 0).length,
+    declinedGrades: grades.filter((g) => g.delta < 0).length,
+    meanDelta:
+      Math.round(
+        (grades.reduce((s, g) => s + g.delta, 0) / Math.max(1, grades.length)) * 10,
+      ) / 10,
+  };
+}
+
+/** The chronologically previous term, useful as a default comparison baseline. */
+export function previousTermId(termId: string): string {
+  const i = termIndex(termId);
+  return TERMS[Math.max(0, i - 1)].id;
+}
