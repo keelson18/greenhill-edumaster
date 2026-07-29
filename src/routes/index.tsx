@@ -49,6 +49,8 @@ import {
   upcomingEvents,
 } from "@/lib/edumaster-data";
 import { useTerm } from "@/lib/term-context";
+import { TermComparison } from "@/components/TermComparison";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
