@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Sparkles, FileDown, Plus, Save, Trophy, Printer } from "lucide-react";
+import { Sparkles, FileDown, Plus, Save, Trophy, Printer, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +50,7 @@ import {
 } from "@/lib/edumaster-data";
 import { useTerm } from "@/lib/term-context";
 import { TermSelect } from "@/components/TermSelect";
+import { TermLockBar } from "@/components/TermLockBar";
 
 export const Route = createFileRoute("/examinations")({
   head: () => ({
@@ -99,7 +100,8 @@ function downloadFile(name: string, content: string, type = "text/csv;charset=ut
 }
 
 function ExamsPage() {
-  const { term, termId } = useTerm();
+  const { term, termId, isLocked } = useTerm();
+  const locked = isLocked();
   const [grade, setGrade] = useState<Grade>("Grade 7");
   const [rows, setRows] = useState(() => marksForTerm("Grade 7", termId));
   const [saved, setSaved] = useState(true);
@@ -134,6 +136,10 @@ function ExamsPage() {
       : 0;
 
   const setMark = (studentId: string, subject: string, value: string) => {
+    if (locked) {
+      toast.error(`${term.label} is locked — reopen the term to edit marks`);
+      return;
+    }
     const v = Math.max(0, Math.min(100, Number(value) || 0));
     setSaved(false);
     setRows((prev) =>
@@ -186,6 +192,7 @@ function ExamsPage() {
       subtitle={`Compile assessments, capture marks and publish CBC report cards for ${term.label}.`}
       actions={
         <NewExamDialog
+          disabled={locked}
           termLabel={term.label}
           onCreate={(exam) => {
             setExtraExams((p) => [exam, ...p]);
@@ -194,6 +201,8 @@ function ExamsPage() {
         />
       }
     >
+      <TermLockBar className="mb-4" />
+
       <Tabs defaultValue="exams" className="space-y-4">
         <TabsList className="flex h-auto flex-wrap justify-start gap-1 bg-muted p-1">
           <TabsTrigger value="exams">Examinations</TabsTrigger>
@@ -288,7 +297,8 @@ function ExamsPage() {
                 <CardTitle className="text-base">Marks Entry — {term.label}</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Class mean: <span className="font-semibold text-foreground">{classMean}%</span> ·{" "}
-                  {computed.withTotals.length} learners · {saved ? "All changes saved" : "Unsaved changes"}
+                  {computed.withTotals.length} learners ·{" "}
+                  {locked ? "Locked (read-only)" : saved ? "All changes saved" : "Unsaved changes"}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -306,13 +316,23 @@ function ExamsPage() {
                   </SelectContent>
                 </Select>
                 <Button
-                  disabled={saved}
+                  disabled={saved || locked}
+                  title={locked ? `${term.label} is locked` : undefined}
                   onClick={() => {
+                    if (locked) return;
                     setSaved(true);
                     toast.success(`${grade} marks saved for ${term.label}`);
                   }}
                 >
-                  <Save className="mr-1.5 size-4" /> {saved ? "Saved" : "Save marks"}
+                  {locked ? (
+                    <>
+                      <Lock className="mr-1.5 size-4" /> Locked
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-1.5 size-4" /> {saved ? "Saved" : "Save marks"}
+                    </>
+                  )}
                 </Button>
               </div>
             </CardHeader>
@@ -346,7 +366,9 @@ function ExamsPage() {
                             max={100}
                             value={r.marks[s]}
                             onChange={(e) => setMark(r.studentId, s, e.target.value)}
-                            className="h-9 w-16 text-center"
+                            disabled={locked}
+                            aria-label={`${s} mark for ${r.name}`}
+                            className="h-9 w-16 text-center disabled:opacity-100 disabled:bg-muted"
                           />
                         </TableCell>
                       ))}
@@ -516,6 +538,11 @@ function ExamsPage() {
                   <p className="text-xs opacity-80">
                     CBC Learner Progress Report · {term.label} · {term.window}
                   </p>
+                  {locked && (
+                    <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary-foreground/15 px-2 py-0.5 text-[11px] font-semibold">
+                      <Lock className="size-3" aria-hidden /> Published · locked record
+                    </span>
+                  )}
                 </div>
                 <CardContent className="space-y-4 p-6">
                   <div className="grid gap-2 text-sm sm:grid-cols-3">
@@ -588,9 +615,11 @@ function ExamsPage() {
 function NewExamDialog({
   termLabel,
   onCreate,
+  disabled = false,
 }: {
   termLabel: string;
   onCreate: (exam: Exam) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -623,7 +652,7 @@ function NewExamDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button disabled={disabled} title={disabled ? `${termLabel} is locked` : undefined}>
           <Plus className="mr-1.5 size-4" /> New examination
         </Button>
       </DialogTrigger>

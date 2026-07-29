@@ -49,6 +49,8 @@ import {
   upcomingEvents,
 } from "@/lib/edumaster-data";
 import { useTerm } from "@/lib/term-context";
+import { TermComparison } from "@/components/TermComparison";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -203,9 +205,13 @@ function Dashboard() {
         ))}
       </div>
 
+      {/* Term-to-term comparison */}
+      <TermComparison className="mb-6" />
+
       {/* Charts */}
       <div className="mb-6 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
+
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Fee Collection — {term.label} (KES millions)</CardTitle>
           </CardHeader>
