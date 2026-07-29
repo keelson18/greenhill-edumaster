@@ -205,7 +205,6 @@ function Dashboard() {
         ))}
       </div>
 
-      {/* Charts */}
       {/* Term-to-term comparison */}
       <TermComparison className="mb-6" />
 
