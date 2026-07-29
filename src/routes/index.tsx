@@ -206,8 +206,13 @@ function Dashboard() {
       </div>
 
       {/* Charts */}
+      {/* Term-to-term comparison */}
+      <TermComparison className="mb-6" />
+
+      {/* Charts */}
       <div className="mb-6 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
+
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Fee Collection — {term.label} (KES millions)</CardTitle>
           </CardHeader>
