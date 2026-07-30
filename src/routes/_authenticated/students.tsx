@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/table";
 import { STUDENTS, GRADES, KES, type Student } from "@/lib/edumaster-data";
 
-export const Route = createFileRoute("/students")({
+export const Route = createFileRoute("/_authenticated/students")({
   head: () => ({
     meta: [
       { title: "Student Management | EduMaster Greenhill Academy" },

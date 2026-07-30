@@ -63,7 +63,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "EduMaster Dashboard | Greenhill Academy CBC School System" },

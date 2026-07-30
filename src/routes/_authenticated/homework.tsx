@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BookOpen } from "lucide-react";
 import { ModulePage } from "@/components/ModulePage";
 
-export const Route = createFileRoute("/homework")({
+export const Route = createFileRoute("/_authenticated/homework")({
   head: () => ({
     meta: [
       { title: "Homework | EduMaster Greenhill Academy" },

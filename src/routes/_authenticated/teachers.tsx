@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Users } from "lucide-react";
 import { ModulePage } from "@/components/ModulePage";
 
-export const Route = createFileRoute("/teachers")({
+export const Route = createFileRoute("/_authenticated/teachers")({
   head: () => ({
     meta: [
       { title: "Teachers | EduMaster Greenhill Academy" },

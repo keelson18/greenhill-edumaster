@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Boxes } from "lucide-react";
 import { ModulePage } from "@/components/ModulePage";
 
-export const Route = createFileRoute("/inventory")({
+export const Route = createFileRoute("/_authenticated/inventory")({
   head: () => ({
     meta: [
       { title: "Inventory | EduMaster Greenhill Academy" },
