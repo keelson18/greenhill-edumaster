@@ -75,25 +75,18 @@ export function TermLockBar({
       <Button
         variant={locked ? "default" : "outline"}
         className="shrink-0"
-        onClick={() => {
-          if (locked) {
-            unlockTerm(id);
-            toast.success(`${term.label} reopened for editing`);
-          } else {
-            lockTerm(id);
-            toast.success(`${term.label} locked — marks are now read-only`);
-          }
-        }}
+        disabled={!isAdmin || isUpdatingLock}
+        title={isAdmin ? undefined : "Only administrators can open or close a term"}
+        onClick={toggleLock}
       >
-        {locked ? (
-          <>
-            <LockOpen className="mr-1.5 size-4" /> Reopen term
-          </>
+        {isUpdatingLock ? (
+          <Loader2 className="mr-1.5 size-4 animate-spin" aria-hidden />
+        ) : locked ? (
+          <LockOpen className="mr-1.5 size-4" aria-hidden />
         ) : (
-          <>
-            <Lock className="mr-1.5 size-4" /> Lock term
-          </>
+          <Lock className="mr-1.5 size-4" aria-hidden />
         )}
+        {locked ? "Reopen term" : "Lock term"}
       </Button>
     </div>
   );
