@@ -25,7 +25,7 @@ import { TermSelect } from "@/components/TermSelect";
 import { useTerm } from "@/lib/term-context";
 
 const NAV = [
-  { group: "Overview", items: [{ to: "/", label: "Dashboard", icon: LayoutDashboard }] },
+  { group: "Overview", items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] },
   {
     group: "Academics",
     items: [
@@ -47,6 +47,16 @@ const NAV = [
     ],
   },
 ] as const;
+
+function initialsOf(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 
 export function AppLayout({
   title,
