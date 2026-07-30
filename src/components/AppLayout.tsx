@@ -81,7 +81,14 @@ export function AppLayout({
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const { term } = useTerm();
+  const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const displayName = user?.fullName?.trim() || user?.email || "Staff member";
+
+  async function handleSignOut() {
+    await signOut();
+  }
+
 
   return (
     <div className="min-h-screen w-full bg-background">
