@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Library } from "lucide-react";
 import { ModulePage } from "@/components/ModulePage";
 
-export const Route = createFileRoute("/library")({
+export const Route = createFileRoute("/_authenticated/library")({
   head: () => ({
     meta: [
       { title: "Library | EduMaster Greenhill Academy" },

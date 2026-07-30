@@ -1,13 +1,15 @@
-import { Lock, LockOpen } from "lucide-react";
+import { Loader2, Lock, LockOpen } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useTerm } from "@/lib/term-context";
+import { useAuth } from "@/lib/auth-context";
 
 /**
  * Shows the read-only state of a term and lets an administrator close or
- * reopen it. Marks entry and report-card generation respect this state.
+ * reopen it. Marks entry and report-card generation respect this state, and
+ * the database rejects mark changes for a locked term regardless of the UI.
  */
 export function TermLockBar({
   termId,
@@ -16,10 +18,26 @@ export function TermLockBar({
   termId?: string;
   className?: string;
 }) {
-  const { term, isLocked, lockReason, lockTerm, unlockTerm } = useTerm();
+  const { term, isLocked, lockReason, lockTerm, unlockTerm, isUpdatingLock } = useTerm();
+  const { isAdmin } = useAuth();
   const id = termId ?? term.id;
   const locked = isLocked(id);
   const reason = lockReason(id);
+
+  async function toggleLock() {
+    try {
+      if (locked) {
+        await unlockTerm(id);
+        toast.success(`${term.label} reopened for editing`);
+      } else {
+        await lockTerm(id);
+        toast.success(`${term.label} locked — marks are now read-only`);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update the term");
+    }
+  }
+
 
   return (
     <div
@@ -57,25 +75,18 @@ export function TermLockBar({
       <Button
         variant={locked ? "default" : "outline"}
         className="shrink-0"
-        onClick={() => {
-          if (locked) {
-            unlockTerm(id);
-            toast.success(`${term.label} reopened for editing`);
-          } else {
-            lockTerm(id);
-            toast.success(`${term.label} locked — marks are now read-only`);
-          }
-        }}
+        disabled={!isAdmin || isUpdatingLock}
+        title={isAdmin ? undefined : "Only administrators can open or close a term"}
+        onClick={toggleLock}
       >
-        {locked ? (
-          <>
-            <LockOpen className="mr-1.5 size-4" /> Reopen term
-          </>
+        {isUpdatingLock ? (
+          <Loader2 className="mr-1.5 size-4 animate-spin" aria-hidden />
+        ) : locked ? (
+          <LockOpen className="mr-1.5 size-4" aria-hidden />
         ) : (
-          <>
-            <Lock className="mr-1.5 size-4" /> Lock term
-          </>
+          <Lock className="mr-1.5 size-4" aria-hidden />
         )}
+        {locked ? "Reopen term" : "Lock term"}
       </Button>
     </div>
   );

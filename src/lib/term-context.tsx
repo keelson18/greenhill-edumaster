@@ -7,98 +7,129 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { CURRENT_TERM_ID, TERMS, getTerm, type Term } from "@/lib/edumaster-data";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { QUERY_DEFAULTS } from "@/config/app.config";
+import { listTerms, setTermLock } from "@/lib/api/school.functions";
+import type { TermDTO } from "@/lib/api/types";
+import { useAuth } from "@/lib/auth-context";
 
 /**
  * Term locking policy.
- * A term is locked when it has been closed (either by the school calendar or
- * explicitly by an administrator). Locked terms are read-only: marks cannot be
- * edited and report cards are treated as published records.
+ * A term is locked when an administrator has closed it. Locked terms are
+ * read-only: the database rejects any mark change for that term, and the UI
+ * mirrors that state. `closed` means the calendar has moved past the term.
  */
 export type LockReason = "closed" | "manual" | null;
 
-type TermContextValue = {
+export interface TermContextValue {
   termId: string;
-  term: Term;
+  term: TermDTO;
+  terms: TermDTO[];
   setTermId: (id: string) => void;
-  terms: Term[];
-  /** True when the given (or active) term is read-only. */
+  isLoading: boolean;
   isLocked: (id?: string) => boolean;
   lockReason: (id?: string) => LockReason;
-  lockTerm: (id: string) => void;
-  unlockTerm: (id: string) => void;
-};
+  lockTerm: (id: string) => Promise<void>;
+  unlockTerm: (id: string) => Promise<void>;
+  /** True while a lock change is in flight. */
+  isUpdatingLock: boolean;
+}
 
 const TermContext = createContext<TermContextValue | null>(null);
 
 const STORAGE_KEY = "edumaster.termId";
-const LOCK_STORAGE_KEY = "edumaster.termLocks";
 
-type LockOverrides = Record<string, boolean>;
+const PLACEHOLDER_TERM: TermDTO = {
+  id: "",
+  uuid: "",
+  label: "Loading term…",
+  short: "—",
+  year: new Date().getFullYear(),
+  startsOn: "",
+  endsOn: "",
+  window: "",
+  status: "Current",
+  isLocked: false,
+};
 
-function readJson<T>(key: string, fallback: T): T {
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeJson(key: string, value: unknown) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* storage unavailable — locking stays in-memory for this session */
-  }
-}
+export const termsQueryKey = ["terms"] as const;
 
 export function TermProvider({ children }: { children: ReactNode }) {
-  const [termId, setTermIdState] = useState<string>(CURRENT_TERM_ID);
-  const [overrides, setOverrides] = useState<LockOverrides>({});
+  const { session } = useAuth();
+  const queryClient = useQueryClient();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const { data: terms = [], isLoading } = useQuery({
+    queryKey: termsQueryKey,
+    queryFn: () => listTerms(),
+    enabled: Boolean(session),
+    staleTime: QUERY_DEFAULTS.referenceStaleTimeMs,
+  });
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (saved && TERMS.some((t) => t.id === saved)) setTermIdState(saved);
-    setOverrides(readJson<LockOverrides>(LOCK_STORAGE_KEY, {}));
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved) setSelectedId(saved);
+    } catch {
+      /* storage unavailable — selection stays in memory for this session */
+    }
   }, []);
+
+  const activeTerm = useMemo(() => {
+    if (terms.length === 0) return PLACEHOLDER_TERM;
+    return (
+      terms.find((t) => t.id === selectedId) ??
+      terms.find((t) => t.status === "Current") ??
+      terms[terms.length - 1]
+    );
+  }, [terms, selectedId]);
+
+  const setTermId = useCallback((id: string) => {
+    setSelectedId(id);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, id);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const lockMutation = useMutation({
+    mutationFn: (input: { termCode: string; locked: boolean }) => setTermLock({ data: input }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: termsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["marksheet"] });
+    },
+  });
 
   const lockReason = useCallback(
     (id?: string): LockReason => {
-      const target = id ?? termId;
-      if (target in overrides) return overrides[target] ? "manual" : null;
-      return getTerm(target).status === "Closed" ? "closed" : null;
+      const target = terms.find((t) => t.id === (id ?? activeTerm.id));
+      if (!target) return null;
+      if (!target.isLocked) return null;
+      return target.status === "Closed" ? "closed" : "manual";
     },
-    [overrides, termId],
+    [terms, activeTerm.id],
   );
-
-  const setOverride = useCallback((id: string, locked: boolean) => {
-    setOverrides((prev) => {
-      const next = { ...prev, [id]: locked };
-      writeJson(LOCK_STORAGE_KEY, next);
-      return next;
-    });
-  }, []);
 
   const value = useMemo<TermContextValue>(
     () => ({
-      termId,
-      term: getTerm(termId),
-      terms: TERMS,
-      setTermId: (id: string) => {
-        setTermIdState(id);
-        try {
-          window.localStorage.setItem(STORAGE_KEY, id);
-        } catch {
-          /* ignore */
-        }
-      },
-      isLocked: (id?: string) => lockReason(id) !== null,
+      termId: activeTerm.id,
+      term: activeTerm,
+      terms,
+      setTermId,
+      isLoading,
+      isLocked: (id?: string) =>
+        Boolean(terms.find((t) => t.id === (id ?? activeTerm.id))?.isLocked),
       lockReason,
-      lockTerm: (id: string) => setOverride(id, true),
-      unlockTerm: (id: string) => setOverride(id, false),
+      lockTerm: async (id: string) => {
+        await lockMutation.mutateAsync({ termCode: id, locked: true });
+      },
+      unlockTerm: async (id: string) => {
+        await lockMutation.mutateAsync({ termCode: id, locked: false });
+      },
+      isUpdatingLock: lockMutation.isPending,
     }),
-    [termId, lockReason, setOverride],
+    [activeTerm, terms, setTermId, isLoading, lockReason, lockMutation],
   );
 
   return <TermContext.Provider value={value}>{children}</TermContext.Provider>;

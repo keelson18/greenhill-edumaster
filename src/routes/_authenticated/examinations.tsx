@@ -52,7 +52,7 @@ import { useTerm } from "@/lib/term-context";
 import { TermSelect } from "@/components/TermSelect";
 import { TermLockBar } from "@/components/TermLockBar";
 
-export const Route = createFileRoute("/examinations")({
+export const Route = createFileRoute("/_authenticated/examinations")({
   head: () => ({
     meta: [
       { title: "Examinations & CBC Marks Entry | EduMaster" },

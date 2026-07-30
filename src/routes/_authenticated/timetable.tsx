@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CalendarDays } from "lucide-react";
 import { ModulePage } from "@/components/ModulePage";
 
-export const Route = createFileRoute("/timetable")({
+export const Route = createFileRoute("/_authenticated/timetable")({
   head: () => ({
     meta: [
       { title: "Timetable | EduMaster Greenhill Academy" },

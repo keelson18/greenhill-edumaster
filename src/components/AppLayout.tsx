@@ -14,6 +14,7 @@ import {
   Search,
   Bell,
   ChevronDown,
+  LogOut,
   Menu,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -21,11 +22,20 @@ import { cn } from "@/lib/utils";
 import { SCHOOL } from "@/lib/edumaster-data";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { TermSelect } from "@/components/TermSelect";
 import { useTerm } from "@/lib/term-context";
+import { useAuth } from "@/lib/auth-context";
 
 const NAV = [
-  { group: "Overview", items: [{ to: "/", label: "Dashboard", icon: LayoutDashboard }] },
+  { group: "Overview", items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] },
   {
     group: "Academics",
     items: [
@@ -48,6 +58,16 @@ const NAV = [
   },
 ] as const;
 
+function initialsOf(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+
 export function AppLayout({
   title,
   subtitle,
@@ -61,7 +81,14 @@ export function AppLayout({
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const { term } = useTerm();
+  const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const displayName = user?.fullName?.trim() || user?.email || "Staff member";
+
+  async function handleSignOut() {
+    await signOut();
+  }
+
 
   return (
     <div className="min-h-screen w-full bg-background">
@@ -148,16 +175,37 @@ export function AppLayout({
                 <Bell className="size-4 text-muted-foreground" />
                 <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-destructive" />
               </button>
-              <div className="flex items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-3">
-                <span className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-                  MK
-                </span>
-                <div className="hidden text-left leading-tight sm:block">
-                  <p className="text-xs font-semibold">{SCHOOL.principal}</p>
-                  <p className="text-[10px] text-muted-foreground">Principal</p>
-                </div>
-                <ChevronDown className="size-3.5 text-muted-foreground" />
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="flex items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-3 text-left transition-colors hover:bg-muted/60"
+                    aria-label="Account menu"
+                  >
+                    <span className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                      {initialsOf(displayName)}
+                    </span>
+                    <span className="hidden leading-tight sm:block">
+                      <span className="block text-xs font-semibold">{displayName}</span>
+                      <span className="block text-[10px] capitalize text-muted-foreground">
+                        {user?.roles?.[0] ?? "Staff"}
+                      </span>
+                    </span>
+                    <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="truncate font-normal">
+                    <span className="block text-sm font-medium">{displayName}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {user?.email}
+                    </span>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => void handleSignOut()}>
+                    <LogOut className="mr-2 size-4" aria-hidden /> Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>

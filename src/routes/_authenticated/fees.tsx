@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Wallet } from "lucide-react";
 import { ModulePage } from "@/components/ModulePage";
 
-export const Route = createFileRoute("/fees")({
+export const Route = createFileRoute("/_authenticated/fees")({
   head: () => ({
     meta: [
       { title: "Fees & Finance | EduMaster Greenhill Academy" },

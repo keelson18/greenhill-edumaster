@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Briefcase } from "lucide-react";
 import { ModulePage } from "@/components/ModulePage";
 
-export const Route = createFileRoute("/payroll")({
+export const Route = createFileRoute("/_authenticated/payroll")({
   head: () => ({
     meta: [
       { title: "Payroll & HR | EduMaster Greenhill Academy" },

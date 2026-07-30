@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Bus } from "lucide-react";
 import { ModulePage } from "@/components/ModulePage";
 
-export const Route = createFileRoute("/transport")({
+export const Route = createFileRoute("/_authenticated/transport")({
   head: () => ({
     meta: [
       { title: "Transport | EduMaster Greenhill Academy" },
