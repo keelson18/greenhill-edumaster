@@ -14,16 +14,356 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      exams: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_on: string
+          grade_scope: string
+          id: string
+          name: string
+          starts_on: string
+          status: Database["public"]["Enums"]["exam_status"]
+          term_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_on: string
+          grade_scope?: string
+          id?: string
+          name: string
+          starts_on: string
+          status?: Database["public"]["Enums"]["exam_status"]
+          term_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_on?: string
+          grade_scope?: string
+          id?: string
+          name?: string
+          starts_on?: string
+          status?: Database["public"]["Enums"]["exam_status"]
+          term_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exams_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fee_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          method: string
+          paid_at: string
+          recorded_by: string | null
+          reference: string | null
+          student_id: string
+          term_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          method?: string
+          paid_at?: string
+          recorded_by?: string | null
+          reference?: string | null
+          student_id: string
+          term_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: string
+          paid_at?: string
+          recorded_by?: string | null
+          reference?: string | null
+          student_id?: string
+          term_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marks: {
+        Row: {
+          created_at: string
+          entered_by: string | null
+          exam_id: string
+          id: string
+          score: number
+          student_id: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entered_by?: string | null
+          exam_id: string
+          id?: string
+          score: number
+          student_id: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entered_by?: string | null
+          exam_id?: string
+          id?: string
+          score?: number
+          student_id?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marks_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marks_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marks_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      students: {
+        Row: {
+          admission_no: string
+          admitted_on: string
+          county: string | null
+          created_at: string
+          date_of_birth: string | null
+          fee_billed: number
+          full_name: string
+          gender: Database["public"]["Enums"]["gender"]
+          grade_level: string
+          guardian_name: string
+          guardian_phone: string
+          id: string
+          nemis_no: string
+          status: Database["public"]["Enums"]["student_status"]
+          stream: string
+          updated_at: string
+        }
+        Insert: {
+          admission_no: string
+          admitted_on?: string
+          county?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          fee_billed?: number
+          full_name: string
+          gender: Database["public"]["Enums"]["gender"]
+          grade_level: string
+          guardian_name: string
+          guardian_phone: string
+          id?: string
+          nemis_no: string
+          status?: Database["public"]["Enums"]["student_status"]
+          stream?: string
+          updated_at?: string
+        }
+        Update: {
+          admission_no?: string
+          admitted_on?: string
+          county?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          fee_billed?: number
+          full_name?: string
+          gender?: Database["public"]["Enums"]["gender"]
+          grade_level?: string
+          guardian_name?: string
+          guardian_phone?: string
+          id?: string
+          nemis_no?: string
+          status?: Database["public"]["Enums"]["student_status"]
+          stream?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subjects: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      terms: {
+        Row: {
+          code: string
+          created_at: string
+          ends_on: string
+          id: string
+          is_locked: boolean
+          label: string
+          locked_at: string | null
+          locked_by: string | null
+          short_label: string
+          starts_on: string
+          status: Database["public"]["Enums"]["term_status"]
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          ends_on: string
+          id?: string
+          is_locked?: boolean
+          label: string
+          locked_at?: string | null
+          locked_by?: string | null
+          short_label: string
+          starts_on: string
+          status?: Database["public"]["Enums"]["term_status"]
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          ends_on?: string
+          id?: string
+          is_locked?: boolean
+          label?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          short_label?: string
+          starts_on?: string
+          status?: Database["public"]["Enums"]["term_status"]
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "teacher" | "parent"
+      exam_status: "Draft" | "Active" | "Marking" | "Completed"
+      gender: "Male" | "Female"
+      student_status: "Active" | "Suspended" | "Transferred"
+      term_status: "Closed" | "Current" | "Upcoming"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +490,12 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "teacher", "parent"],
+      exam_status: ["Draft", "Active", "Marking", "Completed"],
+      gender: ["Male", "Female"],
+      student_status: ["Active", "Suspended", "Transferred"],
+      term_status: ["Closed", "Current", "Upcoming"],
+    },
   },
 } as const
