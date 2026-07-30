@@ -14,6 +14,7 @@ import {
   Search,
   Bell,
   ChevronDown,
+  LogOut,
   Menu,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -21,8 +22,17 @@ import { cn } from "@/lib/utils";
 import { SCHOOL } from "@/lib/edumaster-data";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { TermSelect } from "@/components/TermSelect";
 import { useTerm } from "@/lib/term-context";
+import { useAuth } from "@/lib/auth-context";
 
 const NAV = [
   { group: "Overview", items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] },
