@@ -9,213 +9,186 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TransportRouteImport } from './routes/transport'
-import { Route as TimetableRouteImport } from './routes/timetable'
-import { Route as TeachersRouteImport } from './routes/teachers'
-import { Route as StudentsRouteImport } from './routes/students'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as PayrollRouteImport } from './routes/payroll'
-import { Route as LibraryRouteImport } from './routes/library'
-import { Route as InventoryRouteImport } from './routes/inventory'
-import { Route as HomeworkRouteImport } from './routes/homework'
-import { Route as FeesRouteImport } from './routes/fees'
-import { Route as ExaminationsRouteImport } from './routes/examinations'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedTransportRouteImport } from './routes/_authenticated/transport'
+import { Route as AuthenticatedTimetableRouteImport } from './routes/_authenticated/timetable'
+import { Route as AuthenticatedTeachersRouteImport } from './routes/_authenticated/teachers'
+import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
+import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
+import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
+import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
+import { Route as AuthenticatedHomeworkRouteImport } from './routes/_authenticated/homework'
+import { Route as AuthenticatedFeesRouteImport } from './routes/_authenticated/fees'
+import { Route as AuthenticatedExaminationsRouteImport } from './routes/_authenticated/examinations'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 
-const TransportRoute = TransportRouteImport.update({
-  id: '/transport',
-  path: '/transport',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TimetableRoute = TimetableRouteImport.update({
-  id: '/timetable',
-  path: '/timetable',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TeachersRoute = TeachersRouteImport.update({
-  id: '/teachers',
-  path: '/teachers',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StudentsRoute = StudentsRouteImport.update({
-  id: '/students',
-  path: '/students',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PayrollRoute = PayrollRouteImport.update({
-  id: '/payroll',
+const AuthenticatedTransportRoute = AuthenticatedTransportRouteImport.update({
+  id: '/_authenticated/transport',
+  path: '/transport',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTimetableRoute = AuthenticatedTimetableRouteImport.update({
+  id: '/_authenticated/timetable',
+  path: '/timetable',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTeachersRoute = AuthenticatedTeachersRouteImport.update({
+  id: '/_authenticated/teachers',
+  path: '/teachers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedStudentsRoute = AuthenticatedStudentsRouteImport.update({
+  id: '/_authenticated/students',
+  path: '/students',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPayrollRoute = AuthenticatedPayrollRouteImport.update({
+  id: '/_authenticated/payroll',
   path: '/payroll',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LibraryRoute = LibraryRouteImport.update({
-  id: '/library',
+const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
+  id: '/_authenticated/library',
   path: '/library',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InventoryRoute = InventoryRouteImport.update({
-  id: '/inventory',
+const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
+  id: '/_authenticated/inventory',
   path: '/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HomeworkRoute = HomeworkRouteImport.update({
-  id: '/homework',
+const AuthenticatedHomeworkRoute = AuthenticatedHomeworkRouteImport.update({
+  id: '/_authenticated/homework',
   path: '/homework',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FeesRoute = FeesRouteImport.update({
-  id: '/fees',
+const AuthenticatedFeesRoute = AuthenticatedFeesRouteImport.update({
+  id: '/_authenticated/fees',
   path: '/fees',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ExaminationsRoute = ExaminationsRouteImport.update({
-  id: '/examinations',
-  path: '/examinations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthenticatedExaminationsRoute =
+  AuthenticatedExaminationsRouteImport.update({
+    id: '/_authenticated/examinations',
+    path: '/examinations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/_authenticated/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/examinations': typeof ExaminationsRoute
-  '/fees': typeof FeesRoute
-  '/homework': typeof HomeworkRoute
-  '/inventory': typeof InventoryRoute
-  '/library': typeof LibraryRoute
-  '/payroll': typeof PayrollRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/students': typeof StudentsRoute
-  '/teachers': typeof TeachersRoute
-  '/timetable': typeof TimetableRoute
-  '/transport': typeof TransportRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/examinations': typeof AuthenticatedExaminationsRoute
+  '/fees': typeof AuthenticatedFeesRoute
+  '/homework': typeof AuthenticatedHomeworkRoute
+  '/inventory': typeof AuthenticatedInventoryRoute
+  '/library': typeof AuthenticatedLibraryRoute
+  '/payroll': typeof AuthenticatedPayrollRoute
+  '/students': typeof AuthenticatedStudentsRoute
+  '/teachers': typeof AuthenticatedTeachersRoute
+  '/timetable': typeof AuthenticatedTimetableRoute
+  '/transport': typeof AuthenticatedTransportRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/examinations': typeof ExaminationsRoute
-  '/fees': typeof FeesRoute
-  '/homework': typeof HomeworkRoute
-  '/inventory': typeof InventoryRoute
-  '/library': typeof LibraryRoute
-  '/payroll': typeof PayrollRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/students': typeof StudentsRoute
-  '/teachers': typeof TeachersRoute
-  '/timetable': typeof TimetableRoute
-  '/transport': typeof TransportRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/examinations': typeof AuthenticatedExaminationsRoute
+  '/fees': typeof AuthenticatedFeesRoute
+  '/homework': typeof AuthenticatedHomeworkRoute
+  '/inventory': typeof AuthenticatedInventoryRoute
+  '/library': typeof AuthenticatedLibraryRoute
+  '/payroll': typeof AuthenticatedPayrollRoute
+  '/students': typeof AuthenticatedStudentsRoute
+  '/teachers': typeof AuthenticatedTeachersRoute
+  '/timetable': typeof AuthenticatedTimetableRoute
+  '/transport': typeof AuthenticatedTransportRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/examinations': typeof ExaminationsRoute
-  '/fees': typeof FeesRoute
-  '/homework': typeof HomeworkRoute
-  '/inventory': typeof InventoryRoute
-  '/library': typeof LibraryRoute
-  '/payroll': typeof PayrollRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/students': typeof StudentsRoute
-  '/teachers': typeof TeachersRoute
-  '/timetable': typeof TimetableRoute
-  '/transport': typeof TransportRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/examinations': typeof AuthenticatedExaminationsRoute
+  '/_authenticated/fees': typeof AuthenticatedFeesRoute
+  '/_authenticated/homework': typeof AuthenticatedHomeworkRoute
+  '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
+  '/_authenticated/library': typeof AuthenticatedLibraryRoute
+  '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
+  '/_authenticated/students': typeof AuthenticatedStudentsRoute
+  '/_authenticated/teachers': typeof AuthenticatedTeachersRoute
+  '/_authenticated/timetable': typeof AuthenticatedTimetableRoute
+  '/_authenticated/transport': typeof AuthenticatedTransportRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
+    | '/sitemap.xml'
+    | '/dashboard'
     | '/examinations'
     | '/fees'
     | '/homework'
     | '/inventory'
     | '/library'
     | '/payroll'
-    | '/sitemap.xml'
     | '/students'
     | '/teachers'
     | '/timetable'
     | '/transport'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
+    | '/sitemap.xml'
+    | '/dashboard'
     | '/examinations'
     | '/fees'
     | '/homework'
     | '/inventory'
     | '/library'
     | '/payroll'
-    | '/sitemap.xml'
     | '/students'
     | '/teachers'
     | '/timetable'
     | '/transport'
   id:
     | '__root__'
-    | '/'
-    | '/examinations'
-    | '/fees'
-    | '/homework'
-    | '/inventory'
-    | '/library'
-    | '/payroll'
     | '/sitemap.xml'
-    | '/students'
-    | '/teachers'
-    | '/timetable'
-    | '/transport'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/examinations'
+    | '/_authenticated/fees'
+    | '/_authenticated/homework'
+    | '/_authenticated/inventory'
+    | '/_authenticated/library'
+    | '/_authenticated/payroll'
+    | '/_authenticated/students'
+    | '/_authenticated/teachers'
+    | '/_authenticated/timetable'
+    | '/_authenticated/transport'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  ExaminationsRoute: typeof ExaminationsRoute
-  FeesRoute: typeof FeesRoute
-  HomeworkRoute: typeof HomeworkRoute
-  InventoryRoute: typeof InventoryRoute
-  LibraryRoute: typeof LibraryRoute
-  PayrollRoute: typeof PayrollRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  StudentsRoute: typeof StudentsRoute
-  TeachersRoute: typeof TeachersRoute
-  TimetableRoute: typeof TimetableRoute
-  TransportRoute: typeof TransportRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedExaminationsRoute: typeof AuthenticatedExaminationsRoute
+  AuthenticatedFeesRoute: typeof AuthenticatedFeesRoute
+  AuthenticatedHomeworkRoute: typeof AuthenticatedHomeworkRoute
+  AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
+  AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
+  AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
+  AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
+  AuthenticatedTeachersRoute: typeof AuthenticatedTeachersRoute
+  AuthenticatedTimetableRoute: typeof AuthenticatedTimetableRoute
+  AuthenticatedTransportRoute: typeof AuthenticatedTransportRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/transport': {
-      id: '/transport'
-      path: '/transport'
-      fullPath: '/transport'
-      preLoaderRoute: typeof TransportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/timetable': {
-      id: '/timetable'
-      path: '/timetable'
-      fullPath: '/timetable'
-      preLoaderRoute: typeof TimetableRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/teachers': {
-      id: '/teachers'
-      path: '/teachers'
-      fullPath: '/teachers'
-      preLoaderRoute: typeof TeachersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/students': {
-      id: '/students'
-      path: '/students'
-      fullPath: '/students'
-      preLoaderRoute: typeof StudentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -223,71 +196,99 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/payroll': {
-      id: '/payroll'
+    '/_authenticated/transport': {
+      id: '/_authenticated/transport'
+      path: '/transport'
+      fullPath: '/transport'
+      preLoaderRoute: typeof AuthenticatedTransportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/timetable': {
+      id: '/_authenticated/timetable'
+      path: '/timetable'
+      fullPath: '/timetable'
+      preLoaderRoute: typeof AuthenticatedTimetableRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/teachers': {
+      id: '/_authenticated/teachers'
+      path: '/teachers'
+      fullPath: '/teachers'
+      preLoaderRoute: typeof AuthenticatedTeachersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/students': {
+      id: '/_authenticated/students'
+      path: '/students'
+      fullPath: '/students'
+      preLoaderRoute: typeof AuthenticatedStudentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/payroll': {
+      id: '/_authenticated/payroll'
       path: '/payroll'
       fullPath: '/payroll'
-      preLoaderRoute: typeof PayrollRouteImport
+      preLoaderRoute: typeof AuthenticatedPayrollRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/library': {
-      id: '/library'
+    '/_authenticated/library': {
+      id: '/_authenticated/library'
       path: '/library'
       fullPath: '/library'
-      preLoaderRoute: typeof LibraryRouteImport
+      preLoaderRoute: typeof AuthenticatedLibraryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/inventory': {
-      id: '/inventory'
+    '/_authenticated/inventory': {
+      id: '/_authenticated/inventory'
       path: '/inventory'
       fullPath: '/inventory'
-      preLoaderRoute: typeof InventoryRouteImport
+      preLoaderRoute: typeof AuthenticatedInventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/homework': {
-      id: '/homework'
+    '/_authenticated/homework': {
+      id: '/_authenticated/homework'
       path: '/homework'
       fullPath: '/homework'
-      preLoaderRoute: typeof HomeworkRouteImport
+      preLoaderRoute: typeof AuthenticatedHomeworkRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/fees': {
-      id: '/fees'
+    '/_authenticated/fees': {
+      id: '/_authenticated/fees'
       path: '/fees'
       fullPath: '/fees'
-      preLoaderRoute: typeof FeesRouteImport
+      preLoaderRoute: typeof AuthenticatedFeesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/examinations': {
-      id: '/examinations'
+    '/_authenticated/examinations': {
+      id: '/_authenticated/examinations'
       path: '/examinations'
       fullPath: '/examinations'
-      preLoaderRoute: typeof ExaminationsRouteImport
+      preLoaderRoute: typeof AuthenticatedExaminationsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  ExaminationsRoute: ExaminationsRoute,
-  FeesRoute: FeesRoute,
-  HomeworkRoute: HomeworkRoute,
-  InventoryRoute: InventoryRoute,
-  LibraryRoute: LibraryRoute,
-  PayrollRoute: PayrollRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  StudentsRoute: StudentsRoute,
-  TeachersRoute: TeachersRoute,
-  TimetableRoute: TimetableRoute,
-  TransportRoute: TransportRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedExaminationsRoute: AuthenticatedExaminationsRoute,
+  AuthenticatedFeesRoute: AuthenticatedFeesRoute,
+  AuthenticatedHomeworkRoute: AuthenticatedHomeworkRoute,
+  AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
+  AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
+  AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
+  AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
+  AuthenticatedTeachersRoute: AuthenticatedTeachersRoute,
+  AuthenticatedTimetableRoute: AuthenticatedTimetableRoute,
+  AuthenticatedTransportRoute: AuthenticatedTransportRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
