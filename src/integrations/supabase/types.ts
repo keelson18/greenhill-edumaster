@@ -357,6 +357,14 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      term_dashboard_stats: { Args: { _term_code: string }; Returns: Json }
+      term_grade_performance: {
+        Args: { _term_code: string }
+        Returns: {
+          grade_level: string
+          mean_score: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "teacher" | "parent"
