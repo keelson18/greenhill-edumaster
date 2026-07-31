@@ -3,12 +3,15 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   examInputSchema,
   saveMarksSchema,
+  studentInputSchema,
   studentQuerySchema,
+  studentUpdateSchema,
   termCodeSchema,
   termLockSchema,
   uuidSchema,
 } from "@/lib/validation/schemas";
 import { describeWindow } from "@/lib/api/types";
+import type { AppRole } from "@/config/app.config";
 import type {
   DashboardStats,
   ExamDTO,
@@ -29,24 +32,94 @@ import type {
  * browser talks to the database directly.
  */
 
+const STUDENT_COLUMNS =
+  "id, full_name, admission_no, ges_id, grade_level, stream, gender, guardian_name, guardian_phone, date_of_birth, region, district, town, ghana_post_gps, status, admitted_on, fee_billed";
+
+type StudentRow = {
+  id: string;
+  full_name: string;
+  admission_no: string;
+  ges_id: string;
+  grade_level: string;
+  stream: string;
+  gender: string;
+  guardian_name: string;
+  guardian_phone: string;
+  date_of_birth: string | null;
+  region: string | null;
+  district: string | null;
+  town: string | null;
+  ghana_post_gps: string | null;
+  status: string;
+  admitted_on: string;
+  fee_billed: number | string;
+};
+
+function toStudentDTO(s: StudentRow): StudentDTO {
+  return {
+    id: s.id,
+    fullName: s.full_name,
+    admissionNo: s.admission_no,
+    gesId: s.ges_id,
+    gradeLevel: s.grade_level as StudentDTO["gradeLevel"],
+    stream: s.stream,
+    gender: s.gender as StudentDTO["gender"],
+    guardianName: s.guardian_name,
+    guardianPhone: s.guardian_phone,
+    dateOfBirth: s.date_of_birth,
+    region: s.region,
+    district: s.district,
+    town: s.town,
+    ghanaPostGps: s.ghana_post_gps,
+    status: s.status as StudentDTO["status"],
+    admittedOn: s.admitted_on,
+    feeBilled: Number(s.fee_billed),
+  };
+}
+
+const ROLE_PRIORITY: AppRole[] = [
+  "super_admin",
+  "admin",
+  "accountant",
+  "librarian",
+  "teacher",
+  "staff",
+  "parent",
+  "student",
+];
+
 export const getSessionUser = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<SessionUser> => {
     const { supabase, userId, claims } = context;
 
     const [{ data: profile }, { data: roleRows }] = await Promise.all([
-      supabase.from("profiles").select("full_name, email").eq("id", userId).maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("full_name, email, is_suspended")
+        .eq("id", userId)
+        .maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
     ]);
 
-    const roles = (roleRows ?? []).map((r) => r.role as string);
+    const roles = (roleRows ?? []).map((r) => r.role as AppRole);
+    const primaryRole = ROLE_PRIORITY.find((r) => roles.includes(r)) ?? "staff";
+    const isSuperAdmin = roles.includes("super_admin");
+    const isAdmin = isSuperAdmin || roles.includes("admin");
+
     return {
       id: userId,
       email: profile?.email ?? (claims.email as string | undefined) ?? null,
       fullName: profile?.full_name || "Staff member",
       roles,
-      isAdmin: roles.includes("admin"),
-      isStaff: roles.includes("admin") || roles.includes("teacher"),
+      primaryRole,
+      isSuspended: Boolean(profile?.is_suspended),
+      isSuperAdmin,
+      isAdmin,
+      isStaff:
+        isAdmin ||
+        roles.some((r) => ["teacher", "accountant", "librarian", "staff"].includes(r)),
+      isFinance: isAdmin || roles.includes("accountant"),
     };
   });
 
@@ -80,10 +153,7 @@ export const setTermLock = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ termCode: string; locked: boolean }> => {
     const { supabase, userId } = context;
 
-    const { data: isAdmin } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: "admin",
-    });
+    const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: userId });
     if (!isAdmin) throw new Error("Only administrators can open or close a term.");
 
     const { error } = await supabase
@@ -106,10 +176,7 @@ export const listStudents = createServerFn({ method: "GET" })
     const from = (data.page - 1) * data.pageSize;
     let query = context.supabase
       .from("students")
-      .select(
-        "id, full_name, admission_no, nemis_no, grade_level, stream, gender, guardian_name, guardian_phone, date_of_birth, county, status, admitted_on, fee_billed",
-        { count: "exact" },
-      );
+      .select(STUDENT_COLUMNS, { count: "exact" });
 
     if (data.grade) query = query.eq("grade_level", data.grade);
     if (data.status) query = query.eq("status", data.status);
@@ -118,7 +185,7 @@ export const listStudents = createServerFn({ method: "GET" })
       const term = data.search.replace(/[%,()]/g, " ").trim();
       if (term) {
         query = query.or(
-          `full_name.ilike.%${term}%,admission_no.ilike.%${term}%,nemis_no.ilike.%${term}%`,
+          `full_name.ilike.%${term}%,admission_no.ilike.%${term}%,ges_id.ilike.%${term}%`,
         );
       }
     }
@@ -131,27 +198,89 @@ export const listStudents = createServerFn({ method: "GET" })
 
     const total = count ?? 0;
     return {
-      items: (rows ?? []).map((s) => ({
-        id: s.id,
-        fullName: s.full_name,
-        admissionNo: s.admission_no,
-        nemisNo: s.nemis_no,
-        gradeLevel: s.grade_level as StudentDTO["gradeLevel"],
-        stream: s.stream,
-        gender: s.gender,
-        guardianName: s.guardian_name,
-        guardianPhone: s.guardian_phone,
-        dateOfBirth: s.date_of_birth,
-        county: s.county,
-        status: s.status,
-        admittedOn: s.admitted_on,
-        feeBilled: Number(s.fee_billed),
-      })),
+      items: ((rows ?? []) as unknown as StudentRow[]).map(toStudentDTO),
       total,
       page: data.page,
       pageSize: data.pageSize,
       pageCount: Math.max(1, Math.ceil(total / data.pageSize)),
     };
+  });
+
+export const createStudent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => studentInputSchema.parse(input))
+  .handler(async ({ data, context }): Promise<StudentDTO> => {
+    const { data: row, error } = await context.supabase
+      .from("students")
+      .insert({
+        full_name: data.fullName,
+        admission_no: data.admissionNo,
+        ges_id: data.gesId,
+        grade_level: data.gradeLevel,
+        stream: data.stream,
+        gender: data.gender,
+        guardian_name: data.guardianName,
+        guardian_phone: data.guardianPhone,
+        date_of_birth: data.dateOfBirth || null,
+        region: data.region ?? null,
+        district: data.district ?? null,
+        town: data.town ?? null,
+        ghana_post_gps: data.ghanaPostGps || null,
+        status: data.status,
+        fee_billed: data.feeBilled,
+      })
+      .select(STUDENT_COLUMNS)
+      .single();
+
+    if (error) {
+      throw new Error(
+        error.code === "23505"
+          ? "A learner with that admission number or GES ID already exists."
+          : `Unable to admit the learner: ${error.message}`,
+      );
+    }
+    return toStudentDTO(row as unknown as StudentRow);
+  });
+
+export const updateStudent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => studentUpdateSchema.parse(input))
+  .handler(async ({ data, context }): Promise<StudentDTO> => {
+    const patch: Record<string, unknown> = {};
+    if (data.fullName !== undefined) patch.full_name = data.fullName;
+    if (data.admissionNo !== undefined) patch.admission_no = data.admissionNo;
+    if (data.gesId !== undefined) patch.ges_id = data.gesId;
+    if (data.gradeLevel !== undefined) patch.grade_level = data.gradeLevel;
+    if (data.stream !== undefined) patch.stream = data.stream;
+    if (data.gender !== undefined) patch.gender = data.gender;
+    if (data.guardianName !== undefined) patch.guardian_name = data.guardianName;
+    if (data.guardianPhone !== undefined) patch.guardian_phone = data.guardianPhone;
+    if (data.dateOfBirth !== undefined) patch.date_of_birth = data.dateOfBirth || null;
+    if (data.region !== undefined) patch.region = data.region;
+    if (data.district !== undefined) patch.district = data.district;
+    if (data.town !== undefined) patch.town = data.town;
+    if (data.ghanaPostGps !== undefined) patch.ghana_post_gps = data.ghanaPostGps || null;
+    if (data.status !== undefined) patch.status = data.status;
+    if (data.feeBilled !== undefined) patch.fee_billed = data.feeBilled;
+
+    const { data: row, error } = await context.supabase
+      .from("students")
+      .update(patch)
+      .eq("id", data.id)
+      .select(STUDENT_COLUMNS)
+      .single();
+
+    if (error) throw new Error(`Unable to update the learner: ${error.message}`);
+    return toStudentDTO(row as unknown as StudentRow);
+  });
+
+export const deleteStudent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => ({ id: uuidSchema.parse((input as { id: string })?.id) }))
+  .handler(async ({ data, context }): Promise<{ id: string }> => {
+    const { error } = await context.supabase.from("students").delete().eq("id", data.id);
+    if (error) throw new Error(`Unable to remove the learner: ${error.message}`);
+    return { id: data.id };
   });
 
 export const listSubjects = createServerFn({ method: "GET" })
@@ -167,7 +296,9 @@ export const listSubjects = createServerFn({ method: "GET" })
 
 export const listExams = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => ({ termCode: termCodeSchema.parse((input as { termCode: string })?.termCode) }))
+  .inputValidator((input: unknown) => ({
+    termCode: termCodeSchema.parse((input as { termCode: string })?.termCode),
+  }))
   .handler(async ({ data, context }): Promise<ExamDTO[]> => {
     const { supabase } = context;
 
@@ -349,4 +480,21 @@ export const getGradePerformance = createServerFn({ method: "GET" })
     });
     if (error) throw new Error(`Unable to load grade performance: ${error.message}`);
     return (rows ?? []).map((r) => ({ grade: r.grade_level, mean: Number(r.mean_score) }));
+  });
+
+export const getEnrolmentByGrade = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ grade: string; learners: number }[]> => {
+    const { data, error } = await context.supabase
+      .from("students")
+      .select("grade_level")
+      .eq("status", "Active")
+      .limit(5000);
+    if (error) throw new Error(`Unable to load enrolment: ${error.message}`);
+
+    const counts = new Map<string, number>();
+    for (const row of data ?? []) {
+      counts.set(row.grade_level, (counts.get(row.grade_level) ?? 0) + 1);
+    }
+    return [...counts.entries()].map(([grade, learners]) => ({ grade, learners }));
   });

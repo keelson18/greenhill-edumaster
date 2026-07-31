@@ -112,6 +112,179 @@ export type Database = {
           },
         ]
       }
+      homework: {
+        Row: {
+          assigned_on: string
+          class_level: string
+          created_at: string
+          created_by: string | null
+          description: string
+          due_on: string
+          id: string
+          status: string
+          subject_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_on?: string
+          class_level: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_on: string
+          id?: string
+          status?: string
+          subject_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_on?: string
+          class_level?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_on?: string
+          id?: string
+          status?: string
+          subject_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          category: string
+          condition: string
+          created_at: string
+          id: string
+          location: string
+          name: string
+          quantity: number
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          condition?: string
+          created_at?: string
+          id?: string
+          location?: string
+          name: string
+          quantity?: number
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          condition?: string
+          created_at?: string
+          id?: string
+          location?: string
+          name?: string
+          quantity?: number
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      library_books: {
+        Row: {
+          author: string
+          available_copies: number
+          category: string
+          created_at: string
+          id: string
+          isbn: string | null
+          title: string
+          total_copies: number
+          updated_at: string
+        }
+        Insert: {
+          author?: string
+          available_copies?: number
+          category?: string
+          created_at?: string
+          id?: string
+          isbn?: string | null
+          title: string
+          total_copies?: number
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          available_copies?: number
+          category?: string
+          created_at?: string
+          id?: string
+          isbn?: string | null
+          title?: string
+          total_copies?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      library_loans: {
+        Row: {
+          book_id: string
+          borrowed_on: string
+          borrower_name: string
+          created_at: string
+          due_on: string
+          id: string
+          returned_on: string | null
+          student_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          book_id: string
+          borrowed_on?: string
+          borrower_name: string
+          created_at?: string
+          due_on: string
+          id?: string
+          returned_on?: string | null
+          student_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          book_id?: string
+          borrowed_on?: string
+          borrower_name?: string
+          created_at?: string
+          due_on?: string
+          id?: string
+          returned_on?: string | null
+          student_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_loans_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "library_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_loans_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marks: {
         Row: {
           created_at: string
@@ -167,6 +340,53 @@ export type Database = {
           },
         ]
       }
+      payroll_entries: {
+        Row: {
+          created_at: string
+          gross_pay: number
+          id: string
+          income_tax: number
+          net_pay: number
+          period: string
+          ssnit: number
+          staff_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gross_pay?: number
+          id?: string
+          income_tax?: number
+          net_pay?: number
+          period: string
+          ssnit?: number
+          staff_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gross_pay?: number
+          id?: string
+          income_tax?: number
+          net_pay?: number
+          period?: string
+          ssnit?: number
+          staff_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_entries_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -174,6 +394,8 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          is_suspended: boolean
+          phone: string | null
           updated_at: string
         }
         Insert: {
@@ -182,6 +404,8 @@ export type Database = {
           email?: string | null
           full_name?: string
           id: string
+          is_suspended?: boolean
+          phone?: string | null
           updated_at?: string
         }
         Update: {
@@ -190,6 +414,56 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          is_suspended?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff: {
+        Row: {
+          created_at: string
+          department: string
+          email: string | null
+          full_name: string
+          hired_on: string
+          id: string
+          job_title: string
+          monthly_salary: number
+          phone: string
+          staff_no: string
+          status: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string
+          email?: string | null
+          full_name: string
+          hired_on?: string
+          id?: string
+          job_title: string
+          monthly_salary?: number
+          phone?: string
+          staff_no: string
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          email?: string | null
+          full_name?: string
+          hired_on?: string
+          id?: string
+          job_title?: string
+          monthly_salary?: number
+          phone?: string
+          staff_no?: string
+          status?: string
+          subject?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -198,55 +472,64 @@ export type Database = {
         Row: {
           admission_no: string
           admitted_on: string
-          county: string | null
           created_at: string
           date_of_birth: string | null
+          district: string | null
           fee_billed: number
           full_name: string
           gender: Database["public"]["Enums"]["gender"]
+          ges_id: string
+          ghana_post_gps: string | null
           grade_level: string
           guardian_name: string
           guardian_phone: string
           id: string
-          nemis_no: string
+          region: string | null
           status: Database["public"]["Enums"]["student_status"]
           stream: string
+          town: string | null
           updated_at: string
         }
         Insert: {
           admission_no: string
           admitted_on?: string
-          county?: string | null
           created_at?: string
           date_of_birth?: string | null
+          district?: string | null
           fee_billed?: number
           full_name: string
           gender: Database["public"]["Enums"]["gender"]
+          ges_id: string
+          ghana_post_gps?: string | null
           grade_level: string
           guardian_name: string
           guardian_phone: string
           id?: string
-          nemis_no: string
+          region?: string | null
           status?: Database["public"]["Enums"]["student_status"]
           stream?: string
+          town?: string | null
           updated_at?: string
         }
         Update: {
           admission_no?: string
           admitted_on?: string
-          county?: string | null
           created_at?: string
           date_of_birth?: string | null
+          district?: string | null
           fee_billed?: number
           full_name?: string
           gender?: Database["public"]["Enums"]["gender"]
+          ges_id?: string
+          ghana_post_gps?: string | null
           grade_level?: string
           guardian_name?: string
           guardian_phone?: string
           id?: string
-          nemis_no?: string
+          region?: string | null
           status?: Database["public"]["Enums"]["student_status"]
           stream?: string
+          town?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -323,6 +606,102 @@ export type Database = {
         }
         Relationships: []
       }
+      timetable_slots: {
+        Row: {
+          class_level: string
+          created_at: string
+          day_of_week: string
+          ends_at: string
+          id: string
+          period: number
+          room: string | null
+          staff_id: string | null
+          starts_at: string
+          subject_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          class_level: string
+          created_at?: string
+          day_of_week: string
+          ends_at: string
+          id?: string
+          period: number
+          room?: string | null
+          staff_id?: string | null
+          starts_at: string
+          subject_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          class_level?: string
+          created_at?: string
+          day_of_week?: string
+          ends_at?: string
+          id?: string
+          period?: number
+          room?: string | null
+          staff_id?: string | null
+          starts_at?: string
+          subject_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timetable_slots_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transport_routes: {
+        Row: {
+          capacity: number
+          created_at: string
+          driver_name: string
+          driver_phone: string
+          id: string
+          learners: number
+          name: string
+          status: string
+          updated_at: string
+          vehicle_reg: string
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          driver_name: string
+          driver_phone?: string
+          id?: string
+          learners?: number
+          name: string
+          status?: string
+          updated_at?: string
+          vehicle_reg: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          driver_name?: string
+          driver_phone?: string
+          id?: string
+          learners?: number
+          name?: string
+          status?: string
+          updated_at?: string
+          vehicle_reg?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -356,6 +735,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_finance: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       term_dashboard_stats: { Args: { _term_code: string }; Returns: Json }
       term_grade_performance: {
@@ -367,7 +748,15 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "teacher" | "parent"
+      app_role:
+        | "super_admin"
+        | "admin"
+        | "teacher"
+        | "student"
+        | "parent"
+        | "accountant"
+        | "librarian"
+        | "staff"
       exam_status: "Draft" | "Active" | "Marking" | "Completed"
       gender: "Male" | "Female"
       student_status: "Active" | "Suspended" | "Transferred"
@@ -499,7 +888,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "teacher", "parent"],
+      app_role: [
+        "super_admin",
+        "admin",
+        "teacher",
+        "student",
+        "parent",
+        "accountant",
+        "librarian",
+        "staff",
+      ],
       exam_status: ["Draft", "Active", "Marking", "Completed"],
       gender: ["Male", "Female"],
       student_status: ["Active", "Suspended", "Transferred"],
