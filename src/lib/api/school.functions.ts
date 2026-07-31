@@ -265,7 +265,7 @@ export const updateStudent = createServerFn({ method: "POST" })
 
     const { data: row, error } = await context.supabase
       .from("students")
-      .update(patch)
+      .update(patch as never)
       .eq("id", data.id)
       .select(STUDENT_COLUMNS)
       .single();
