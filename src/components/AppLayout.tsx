@@ -1,25 +1,16 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard,
   GraduationCap,
-  Users,
-  ClipboardList,
-  CalendarDays,
-  BookOpen,
-  Wallet,
-  Briefcase,
-  Library,
-  Boxes,
-  Bus,
   Search,
   Bell,
   ChevronDown,
   LogOut,
   Menu,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { SCHOOL } from "@/lib/edumaster-data";
+import { SCHOOL_PROFILE, ROLE_LABELS } from "@/config/app.config";
+import { navFor } from "@/config/nav";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,29 +25,7 @@ import { TermSelect } from "@/components/TermSelect";
 import { useTerm } from "@/lib/term-context";
 import { useAuth } from "@/lib/auth-context";
 
-const NAV = [
-  { group: "Overview", items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] },
-  {
-    group: "Academics",
-    items: [
-      { to: "/students", label: "Students", icon: GraduationCap },
-      { to: "/examinations", label: "Examinations", icon: ClipboardList },
-      { to: "/teachers", label: "Teachers", icon: Users },
-      { to: "/timetable", label: "Timetable", icon: CalendarDays },
-      { to: "/homework", label: "Homework", icon: BookOpen },
-    ],
-  },
-  {
-    group: "Operations",
-    items: [
-      { to: "/fees", label: "Fees & Finance", icon: Wallet },
-      { to: "/payroll", label: "Payroll & HR", icon: Briefcase },
-      { to: "/library", label: "Library", icon: Library },
-      { to: "/inventory", label: "Inventory", icon: Boxes },
-      { to: "/transport", label: "Transport", icon: Bus },
-    ],
-  },
-] as const;
+const SCHOOL = SCHOOL_PROFILE;
 
 function initialsOf(name: string) {
   return name
@@ -66,6 +35,7 @@ function initialsOf(name: string) {
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 }
+
 
 
 export function AppLayout({
@@ -84,6 +54,8 @@ export function AppLayout({
   const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const displayName = user?.fullName?.trim() || user?.email || "Staff member";
+  const sections = useMemo(() => navFor(user?.roles ?? []), [user?.roles]);
+
 
   async function handleSignOut() {
     await signOut();
@@ -112,7 +84,7 @@ export function AppLayout({
         </div>
 
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-6">
-          {NAV.map((section) => (
+          {sections.map((section) => (
             <div key={section.group}>
               <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/50">
                 {section.group}
@@ -186,8 +158,8 @@ export function AppLayout({
                     </span>
                     <span className="hidden leading-tight sm:block">
                       <span className="block text-xs font-semibold">{displayName}</span>
-                      <span className="block text-[10px] capitalize text-muted-foreground">
-                        {user?.roles?.[0] ?? "Staff"}
+                      <span className="block text-[10px] text-muted-foreground">
+                        {user?.primaryRole ? ROLE_LABELS[user.primaryRole] : "Staff"}
                       </span>
                     </span>
                     <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden />
