@@ -158,8 +158,8 @@ export function AppLayout({
                     </span>
                     <span className="hidden leading-tight sm:block">
                       <span className="block text-xs font-semibold">{displayName}</span>
-                      <span className="block text-[10px] capitalize text-muted-foreground">
-                        {user?.roles?.[0] ?? "Staff"}
+                      <span className="block text-[10px] text-muted-foreground">
+                        {user?.primaryRole ? ROLE_LABELS[user.primaryRole] : "Staff"}
                       </span>
                     </span>
                     <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden />
