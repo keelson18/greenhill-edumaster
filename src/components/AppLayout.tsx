@@ -84,7 +84,7 @@ export function AppLayout({
         </div>
 
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-6">
-          {NAV.map((section) => (
+          {sections.map((section) => (
             <div key={section.group}>
               <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/50">
                 {section.group}
