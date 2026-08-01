@@ -54,6 +54,8 @@ export function AppLayout({
   const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const displayName = user?.fullName?.trim() || user?.email || "Staff member";
+  const sections = useMemo(() => navFor(user?.roles ?? []), [user?.roles]);
+
 
   async function handleSignOut() {
     await signOut();
