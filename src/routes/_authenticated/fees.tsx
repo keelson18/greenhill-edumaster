@@ -49,7 +49,7 @@ const METHODS = ["Mobile Money", "Bank transfer", "Cash", "Cheque"] as const;
 function FeesPage() {
   const { isAdmin, hasRole } = useAuth();
   const canPost = isAdmin || hasRole("accountant");
-  const { termCode } = useTerm();
+  const { termId: termCode } = useTerm();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [target, setTarget] = useState<FeeRecordDTO | null>(null);
