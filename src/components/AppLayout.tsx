@@ -1,25 +1,16 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard,
   GraduationCap,
-  Users,
-  ClipboardList,
-  CalendarDays,
-  BookOpen,
-  Wallet,
-  Briefcase,
-  Library,
-  Boxes,
-  Bus,
   Search,
   Bell,
   ChevronDown,
   LogOut,
   Menu,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { SCHOOL } from "@/lib/edumaster-data";
+import { SCHOOL_PROFILE, ROLE_LABELS } from "@/config/app.config";
+import { navFor } from "@/config/nav";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,29 +25,7 @@ import { TermSelect } from "@/components/TermSelect";
 import { useTerm } from "@/lib/term-context";
 import { useAuth } from "@/lib/auth-context";
 
-const NAV = [
-  { group: "Overview", items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] },
-  {
-    group: "Academics",
-    items: [
-      { to: "/students", label: "Students", icon: GraduationCap },
-      { to: "/examinations", label: "Examinations", icon: ClipboardList },
-      { to: "/teachers", label: "Teachers", icon: Users },
-      { to: "/timetable", label: "Timetable", icon: CalendarDays },
-      { to: "/homework", label: "Homework", icon: BookOpen },
-    ],
-  },
-  {
-    group: "Operations",
-    items: [
-      { to: "/fees", label: "Fees & Finance", icon: Wallet },
-      { to: "/payroll", label: "Payroll & HR", icon: Briefcase },
-      { to: "/library", label: "Library", icon: Library },
-      { to: "/inventory", label: "Inventory", icon: Boxes },
-      { to: "/transport", label: "Transport", icon: Bus },
-    ],
-  },
-] as const;
+const SCHOOL = SCHOOL_PROFILE;
 
 function initialsOf(name: string) {
   return name
@@ -66,6 +35,7 @@ function initialsOf(name: string) {
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 }
+
 
 
 export function AppLayout({
