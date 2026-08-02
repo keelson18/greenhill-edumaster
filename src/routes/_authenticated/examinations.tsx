@@ -496,7 +496,7 @@ function ExamsPage() {
                     <div className="mb-4 border-b border-border pb-4 text-center">
                       <h2 className="text-lg font-semibold">{SCHOOL_PROFILE.name}</h2>
                       <p className="text-xs text-muted-foreground">
-                        {SCHOOL_PROFILE.address ?? "Ghana"} · {term.label}
+                        {SCHOOL_PROFILE.town} · {term.label}
                       </p>
                     </div>
                     <div className="mb-4 grid gap-2 text-sm sm:grid-cols-3">
