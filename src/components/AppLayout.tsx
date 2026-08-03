@@ -143,10 +143,8 @@ export function AppLayout({
             </div>
             <div className="ml-auto flex items-center gap-3">
               <TermSelect className="hidden sm:flex" />
-              <button className="relative rounded-full border border-border bg-card p-2" aria-label="Notifications">
-                <Bell className="size-4 text-muted-foreground" />
-                <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-destructive" />
-              </button>
+              <NotificationBell />
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
