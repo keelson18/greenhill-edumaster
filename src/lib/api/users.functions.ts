@@ -6,12 +6,14 @@ import {
   updateUserSchema,
   uuidSchema,
 } from "@/lib/validation/schemas";
-import type { AppRole } from "@/config/app.config";
+import { adminUserIds, notifyUsers, recordAudit, resolveActor } from "@/lib/api/audit.server";
+import { ROLE_LABELS, type AppRole } from "@/config/app.config";
 import type { ManagedUserDTO } from "@/lib/api/types";
 
 /**
  * User management. Every function re-checks the caller is an administrator
- * against the database (never against client state) before acting.
+ * against the database (never against client state) before acting, and writes
+ * an audit entry plus notifications once the change succeeds.
  */
 
 async function assertAdmin(context: {
@@ -20,6 +22,33 @@ async function assertAdmin(context: {
 }) {
   const { data } = await context.supabase.rpc("is_admin", { _user_id: context.userId });
   if (!data) throw new Error("You do not have permission to manage users.");
+}
+
+async function describeUser(
+  supabase: { from: (t: string) => never },
+  userId: string,
+): Promise<{ name: string; email: string | null }> {
+  const { data } = await (
+    supabase as never as {
+      from: (t: string) => {
+        select: (c: string) => {
+          eq: (
+            c: string,
+            v: string,
+          ) => {
+            maybeSingle: () => Promise<{
+              data: { full_name: string; email: string | null } | null;
+            }>;
+          };
+        };
+      };
+    }
+  )
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", userId)
+    .maybeSingle();
+  return { name: data?.full_name || "Unknown user", email: data?.email ?? null };
 }
 
 export const listUsers = createServerFn({ method: "GET" })
@@ -58,6 +87,11 @@ export const assignRole = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ userId: string; role: AppRole }> => {
     await assertAdmin(context as never);
 
+    const { data: previous } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId);
+
     const { error: clearError } = await context.supabase
       .from("user_roles")
       .delete()
@@ -68,6 +102,26 @@ export const assignRole = createServerFn({ method: "POST" })
       .from("user_roles")
       .insert({ user_id: data.userId, role: data.role });
     if (error) throw new Error(`Unable to assign the role: ${error.message}`);
+
+    const actor = await resolveActor(context.supabase as never, context.userId);
+    const target = await describeUser(context.supabase as never, data.userId);
+    const before = (previous ?? []).map((r) => ROLE_LABELS[r.role as AppRole]).join(", ") || "none";
+
+    await recordAudit(context.supabase as never, {
+      actor,
+      action: "role_assigned",
+      entityType: "user",
+      entityId: data.userId,
+      entityLabel: target.name,
+      summary: `Changed ${target.name}'s role from ${before} to ${ROLE_LABELS[data.role]}`,
+      metadata: { from: before, to: data.role },
+    });
+    await notifyUsers(context.supabase as never, [data.userId], {
+      title: "Your role was updated",
+      body: `${actor.name} set your role to ${ROLE_LABELS[data.role]}.`,
+      category: "role",
+      link: "/dashboard",
+    });
     return { userId: data.userId, role: data.role };
   });
 
@@ -83,6 +137,27 @@ export const setUserSuspended = createServerFn({ method: "POST" })
       .update({ is_suspended: data.suspended })
       .eq("id", data.userId);
     if (error) throw new Error(`Unable to update the account: ${error.message}`);
+
+    const actor = await resolveActor(context.supabase as never, context.userId);
+    const target = await describeUser(context.supabase as never, data.userId);
+
+    await recordAudit(context.supabase as never, {
+      actor,
+      action: data.suspended ? "user_suspended" : "user_reinstated",
+      entityType: "user",
+      entityId: data.userId,
+      entityLabel: target.name,
+      summary: `${data.suspended ? "Suspended" : "Reinstated"} the account for ${target.name}`,
+      metadata: { email: target.email },
+    });
+
+    const admins = await adminUserIds(context.supabase as never);
+    await notifyUsers(context.supabase as never, [data.userId, ...admins], {
+      title: data.suspended ? "Account suspended" : "Account reinstated",
+      body: `${actor.name} ${data.suspended ? "suspended" : "reinstated"} the account for ${target.name}.`,
+      category: "account",
+      link: "/users",
+    });
     return { userId: data.userId, suspended: data.suspended };
   });
 
@@ -96,6 +171,17 @@ export const updateUserProfile = createServerFn({ method: "POST" })
       .update({ full_name: data.fullName, phone: data.phone || null })
       .eq("id", data.userId);
     if (error) throw new Error(`Unable to save the user: ${error.message}`);
+
+    const actor = await resolveActor(context.supabase as never, context.userId);
+    await recordAudit(context.supabase as never, {
+      actor,
+      action: "user_updated",
+      entityType: "user",
+      entityId: data.userId,
+      entityLabel: data.fullName,
+      summary: `Updated contact details for ${data.fullName}`,
+      metadata: { phone: data.phone || null },
+    });
     return { userId: data.userId };
   });
 
@@ -112,8 +198,29 @@ export const deleteUser = createServerFn({ method: "POST" })
     if (!isSuper) throw new Error("Only a Super Admin can delete accounts.");
     if (data.userId === context.userId) throw new Error("You cannot delete your own account.");
 
+    const actor = await resolveActor(context.supabase as never, context.userId);
+    const target = await describeUser(context.supabase as never, data.userId);
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(`Unable to delete the account: ${error.message}`);
+
+    await recordAudit(context.supabase as never, {
+      actor,
+      action: "user_deleted",
+      entityType: "user",
+      entityId: data.userId,
+      entityLabel: target.name,
+      summary: `Permanently deleted the account for ${target.name}`,
+      metadata: { email: target.email },
+    });
+
+    const admins = await adminUserIds(context.supabase as never);
+    await notifyUsers(context.supabase as never, admins, {
+      title: "Account deleted",
+      body: `${actor.name} permanently deleted the account for ${target.name}.`,
+      category: "account",
+      link: "/audit-log",
+    });
     return { userId: data.userId };
   });
