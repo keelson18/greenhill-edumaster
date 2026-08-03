@@ -48,7 +48,7 @@ export async function recordAudit(
     entityId?: string | null;
     entityLabel?: string;
     summary: string;
-    metadata?: Record<string, unknown>;
+    metadata?: Record<string, string | number | boolean | null>;
   },
 ) {
   try {

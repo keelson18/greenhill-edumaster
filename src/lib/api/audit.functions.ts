@@ -55,7 +55,7 @@ export const listAuditLogs = createServerFn({ method: "GET" })
         entityId: r.entity_id,
         entityLabel: r.entity_label,
         summary: r.summary,
-        metadata: (r.metadata ?? {}) as Record<string, unknown>,
+        metadata: (r.metadata ?? {}) as Record<string, string | number | boolean | null>,
         createdAt: r.created_at,
       })),
       total,
