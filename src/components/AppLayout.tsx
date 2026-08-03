@@ -2,7 +2,6 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   GraduationCap,
   Search,
-  Bell,
   ChevronDown,
   LogOut,
   Menu,
@@ -22,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TermSelect } from "@/components/TermSelect";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useTerm } from "@/lib/term-context";
 import { useAuth } from "@/lib/auth-context";
 
