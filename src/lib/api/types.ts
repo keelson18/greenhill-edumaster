@@ -251,3 +251,36 @@ export function describeWindow(startsOn: string, endsOn: string): string {
   const end = new Date(endsOn);
   return `${MONTHS[start.getUTCMonth()]} – ${MONTHS[end.getUTCMonth()]} ${end.getUTCFullYear()}`;
 }
+
+export type AuditAction =
+  | "role_assigned"
+  | "user_suspended"
+  | "user_reinstated"
+  | "user_deleted"
+  | "user_updated"
+  | "term_locked"
+  | "term_unlocked";
+
+export interface AuditLogDTO {
+  id: string;
+  actorId: string | null;
+  actorName: string;
+  actorEmail: string | null;
+  action: AuditAction;
+  entityType: string;
+  entityId: string | null;
+  entityLabel: string;
+  summary: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface NotificationDTO {
+  id: string;
+  title: string;
+  body: string;
+  category: string;
+  link: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
