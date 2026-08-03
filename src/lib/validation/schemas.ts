@@ -227,3 +227,23 @@ export type FeePaymentInput = z.infer<typeof feePaymentSchema>;
 export const payrollRunSchema = z.object({
   period: z.string().regex(/^\d{4}-\d{2}$/, "Use YYYY-MM"),
 });
+
+export const AUDIT_ACTIONS = [
+  "role_assigned",
+  "user_suspended",
+  "user_reinstated",
+  "user_deleted",
+  "user_updated",
+  "term_locked",
+  "term_unlocked",
+] as const;
+
+export const auditQuerySchema = paginationSchema.extend({
+  search: z.string().trim().max(80).optional(),
+  action: z.enum(AUDIT_ACTIONS).optional(),
+  entityType: z.enum(["user", "term"]).optional(),
+  /** Inclusive ISO date bounds, e.g. "2026-07-01". */
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+export type AuditQuery = z.infer<typeof auditQuerySchema>;

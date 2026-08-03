@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: Database["public"]["Enums"]["audit_action"]
+          actor_email: string | null
+          actor_id: string | null
+          actor_name: string
+          created_at: string
+          entity_id: string | null
+          entity_label: string
+          entity_type: string
+          id: string
+          metadata: Json
+          summary: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["audit_action"]
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_name?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_label?: string
+          entity_type: string
+          id?: string
+          metadata?: Json
+          summary?: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["audit_action"]
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_name?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_label?: string
+          entity_type?: string
+          id?: string
+          metadata?: Json
+          summary?: string
+        }
+        Relationships: []
+      }
       exams: {
         Row: {
           created_at: string
@@ -339,6 +381,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       payroll_entries: {
         Row: {
@@ -757,6 +832,14 @@ export type Database = {
         | "accountant"
         | "librarian"
         | "staff"
+      audit_action:
+        | "role_assigned"
+        | "user_suspended"
+        | "user_reinstated"
+        | "user_deleted"
+        | "user_updated"
+        | "term_locked"
+        | "term_unlocked"
       exam_status: "Draft" | "Active" | "Marking" | "Completed"
       gender: "Male" | "Female"
       student_status: "Active" | "Suspended" | "Transferred"
@@ -897,6 +980,15 @@ export const Constants = {
         "accountant",
         "librarian",
         "staff",
+      ],
+      audit_action: [
+        "role_assigned",
+        "user_suspended",
+        "user_reinstated",
+        "user_deleted",
+        "user_updated",
+        "term_locked",
+        "term_unlocked",
       ],
       exam_status: ["Draft", "Active", "Marking", "Completed"],
       gender: ["Male", "Female"],

@@ -11,6 +11,7 @@ import {
   Boxes,
   Bus,
   ShieldCheck,
+  ScrollText,
   type LucideIcon,
 } from "lucide-react";
 import type { AppRole } from "@/config/app.config";
@@ -67,7 +68,10 @@ export const NAV_SECTIONS: ReadonlyArray<{ group: string; items: readonly NavIte
   },
   {
     group: "Administration",
-    items: [{ to: "/users", label: "User Management", icon: ShieldCheck, roles: ADMINISTRATION }],
+    items: [
+      { to: "/users", label: "User Management", icon: ShieldCheck, roles: ADMINISTRATION },
+      { to: "/audit-log", label: "Audit Log", icon: ScrollText, roles: ADMINISTRATION },
+    ],
   },
 ];
 

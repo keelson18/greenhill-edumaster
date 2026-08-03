@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { notifyUsers, recordAudit, resolveActor } from "@/lib/api/audit.server";
 import {
   examInputSchema,
   saveMarksSchema,
@@ -156,18 +157,48 @@ export const setTermLock = createServerFn({ method: "POST" })
     const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: userId });
     if (!isAdmin) throw new Error("Only administrators can open or close a term.");
 
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from("terms")
       .update({
         is_locked: data.locked,
         locked_at: data.locked ? new Date().toISOString() : null,
         locked_by: data.locked ? userId : null,
       })
-      .eq("code", data.termCode);
+      .eq("code", data.termCode)
+      .select("id, label")
+      .maybeSingle();
 
     if (error) throw new Error(`Unable to update the term: ${error.message}`);
+
+    const label = updated?.label ?? data.termCode;
+    const actor = await resolveActor(supabase as never, userId);
+    await recordAudit(supabase as never, {
+      actor,
+      action: data.locked ? "term_locked" : "term_unlocked",
+      entityType: "term",
+      entityId: data.termCode,
+      entityLabel: label,
+      summary: `${data.locked ? "Locked" : "Reopened"} ${label} — marks are ${data.locked ? "now read-only" : "editable again"}`,
+      metadata: { termCode: data.termCode },
+    });
+
+    const [{ data: staffRoles }] = await Promise.all([
+      supabase.from("user_roles").select("user_id, role").in("role", ["super_admin", "admin", "teacher"]),
+    ]);
+    await notifyUsers(
+      supabase as never,
+      (staffRoles ?? []).map((r) => r.user_id),
+      {
+        title: data.locked ? `${label} locked` : `${label} reopened`,
+        body: `${actor.name} ${data.locked ? "closed" : "reopened"} ${label}. Marks and report cards are ${data.locked ? "now read-only" : "editable again"}.`,
+        category: "term",
+        link: "/examinations",
+      },
+    );
+
     return { termCode: data.termCode, locked: data.locked };
   });
+
 
 export const listStudents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
