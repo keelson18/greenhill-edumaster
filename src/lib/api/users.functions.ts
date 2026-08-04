@@ -104,6 +104,15 @@ export const assignRole = createServerFn({ method: "POST" })
       .select("role")
       .eq("user_id", data.userId);
 
+    // Only an existing Super Admin may grant the Super Admin role or take it
+    // away from someone else — otherwise a plain Admin could escalate itself.
+    const heldSuperAdmin = (previous ?? []).some((r) => r.role === "super_admin");
+    if (data.role === "super_admin" || heldSuperAdmin) {
+      if (!(await isSuperAdmin(context as never))) {
+        throw new Error("Only a Super Admin can grant or remove the Super Admin role.");
+      }
+    }
+
     const { error: clearError } = await context.supabase
       .from("user_roles")
       .delete()
