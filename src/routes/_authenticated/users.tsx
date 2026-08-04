@@ -58,6 +58,13 @@ export const Route = createFileRoute("/_authenticated/users")({
   component: UsersPage,
 });
 
+const EMPTY_NEW_USER = {
+  fullName: "",
+  email: "",
+  password: "",
+  role: "teacher" as AppRole,
+};
+
 function UsersPage() {
   const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -65,6 +72,8 @@ function UsersPage() {
   const [editing, setEditing] = useState<ManagedUserDTO | null>(null);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newUser, setNewUser] = useState(EMPTY_NEW_USER);
 
   const query = useQuery({
     queryKey: ["managed-users"],
@@ -73,6 +82,18 @@ function UsersPage() {
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["managed-users"] });
+
+  const createMutation = useMutation({
+    mutationFn: (input: typeof EMPTY_NEW_USER) => createUser({ data: input }),
+    onSuccess: () => {
+      invalidate();
+      setCreateOpen(false);
+      setNewUser(EMPTY_NEW_USER);
+      toast.success("Account created");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
 
   const roleMutation = useMutation({
     mutationFn: (input: { userId: string; role: AppRole }) => assignRole({ data: input }),
