@@ -66,9 +66,10 @@ const tooltipStyle = {
 
 function Dashboard() {
   const { term, termId } = useTerm();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const navigate = useNavigate();
-  const enabled = Boolean(termId);
+  const signedIn = Boolean(session);
+  const enabled = Boolean(termId) && signedIn;
 
   const statsQuery = useQuery({
     queryKey: ["dashboard-stats", termId],
@@ -83,6 +84,7 @@ function Dashboard() {
   const enrolmentQuery = useQuery({
     queryKey: ["enrolment-by-grade"],
     queryFn: () => getEnrolmentByGrade(),
+    enabled: signedIn,
   });
 
   const stats = statsQuery.data;
