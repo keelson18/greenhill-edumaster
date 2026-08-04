@@ -189,24 +189,32 @@ function UsersPage() {
     {
       key: "role",
       header: "Role",
-      render: (u) => (
-        <Select
-          value={u.roles[0] ?? "staff"}
-          onValueChange={(role) => roleMutation.mutate({ userId: u.id, role: role as AppRole })}
-          disabled={roleMutation.isPending || u.id === user?.id}
-        >
-          <SelectTrigger className="h-9 w-[170px]" aria-label={`Role for ${u.fullName}`}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ROLES.map((r) => (
-              <SelectItem key={r} value={r}>
-                {ROLE_LABELS[r]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ),
+      render: (u) => {
+        const current = u.roles[0] ?? "staff";
+        const targetIsSuper = u.roles.includes("super_admin");
+        const locked = targetIsSuper && !user?.isSuperAdmin;
+        const options = assignableRoles.includes(current as AppRole)
+          ? assignableRoles
+          : [current as AppRole, ...assignableRoles];
+        return (
+          <Select
+            value={current}
+            onValueChange={(role) => roleMutation.mutate({ userId: u.id, role: role as AppRole })}
+            disabled={roleMutation.isPending || u.id === user?.id || locked}
+          >
+            <SelectTrigger className="h-9 w-[170px]" aria-label={`Role for ${u.fullName}`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((r) => (
+                <SelectItem key={r} value={r} disabled={locked}>
+                  {ROLE_LABELS[r]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      },
     },
     {
       key: "status",
