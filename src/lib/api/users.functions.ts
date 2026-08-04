@@ -253,12 +253,12 @@ export const deleteUser = createServerFn({ method: "POST" })
 export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => createUserSchema.parse(input))
-  .handler(async ({ data, context }): Promise<{ userId: string }> => {
+  .handler(async ({ data, context }): Promise<{ userId?: string; ok: boolean; message?: string }> => {
     const { data: isSuper } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
       _role: "super_admin",
     });
-    if (!isSuper) throw new Error("Only a Super Admin can create accounts.");
+    if (!isSuper) return { ok: false, message: "Only a Super Admin can create accounts." };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
@@ -268,7 +268,11 @@ export const createUser = createServerFn({ method: "POST" })
       user_metadata: { full_name: data.fullName },
     });
     if (error || !created.user) {
-      throw new Error(`Unable to create the account: ${error?.message ?? "unknown error"}`);
+      const raw = error?.message ?? "unknown error";
+      const message = /already been registered|already registered|email_exists/i.test(raw)
+        ? "That email address already has an account. Use a different email, or update the existing user's role instead."
+        : `Unable to create the account: ${raw}`;
+      return { ok: false, message };
     }
     const newUserId = created.user.id;
 
