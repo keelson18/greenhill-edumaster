@@ -90,7 +90,11 @@ function UsersPage() {
 
   const createMutation = useMutation({
     mutationFn: (input: typeof EMPTY_NEW_USER) => createUser({ data: input }),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      if (!result.ok) {
+        toast.error(result.message ?? "Unable to create the account.");
+        return;
+      }
       invalidate();
       setCreateOpen(false);
       setNewUser(EMPTY_NEW_USER);
