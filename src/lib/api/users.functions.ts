@@ -17,12 +17,23 @@ import type { ManagedUserDTO } from "@/lib/api/types";
  * an audit entry plus notifications once the change succeeds.
  */
 
-async function assertAdmin(context: {
+type RpcContext = {
   supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown }> };
   userId: string;
-}) {
+};
+
+async function assertAdmin(context: RpcContext) {
   const { data } = await context.supabase.rpc("is_admin", { _user_id: context.userId });
   if (!data) throw new Error("You do not have permission to manage users.");
+}
+
+/** True only for callers who already hold the Super Admin role themselves. */
+async function isSuperAdmin(context: RpcContext) {
+  const { data } = await context.supabase.rpc("has_role", {
+    _user_id: context.userId,
+    _role: "super_admin",
+  });
+  return Boolean(data);
 }
 
 async function describeUser(
@@ -92,6 +103,15 @@ export const assignRole = createServerFn({ method: "POST" })
       .from("user_roles")
       .select("role")
       .eq("user_id", data.userId);
+
+    // Only an existing Super Admin may grant the Super Admin role or take it
+    // away from someone else — otherwise a plain Admin could escalate itself.
+    const heldSuperAdmin = (previous ?? []).some((r) => r.role === "super_admin");
+    if (data.role === "super_admin" || heldSuperAdmin) {
+      if (!(await isSuperAdmin(context as never))) {
+        throw new Error("Only a Super Admin can grant or remove the Super Admin role.");
+      }
+    }
 
     const { error: clearError } = await context.supabase
       .from("user_roles")
