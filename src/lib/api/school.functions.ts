@@ -7,6 +7,7 @@ import {
   studentInputSchema,
   studentQuerySchema,
   studentUpdateSchema,
+  subjectInputSchema,
   termCodeSchema,
   termLockSchema,
   uuidSchema,
@@ -528,4 +529,33 @@ export const getEnrolmentByGrade = createServerFn({ method: "GET" })
       counts.set(row.grade_level, (counts.get(row.grade_level) ?? 0) + 1);
     }
     return [...counts.entries()].map(([grade, learners]) => ({ grade, learners }));
+  });
+
+/**
+ * Creates a subject. Administrators only — the `subjects_write_admin` policy
+ * enforces the same rule at the database level.
+ */
+export const createSubject = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => subjectInputSchema.parse(input))
+  .handler(async ({ data, context }): Promise<SubjectDTO> => {
+    const { data: isAdmin } = await context.supabase.rpc("is_admin", {
+      _user_id: context.userId,
+    });
+    if (!isAdmin) throw new Error("Only administrators can add subjects.");
+
+    const { data: existing } = await context.supabase
+      .from("subjects")
+      .select("id")
+      .eq("code", data.code)
+      .maybeSingle();
+    if (existing) throw new Error(`Subject code ${data.code} already exists.`);
+
+    const { data: row, error } = await context.supabase
+      .from("subjects")
+      .insert({ code: data.code, name: data.name, sort_order: data.sortOrder })
+      .select("id, code, name")
+      .single();
+    if (error) throw new Error(`Unable to add the subject: ${error.message}`);
+    return row as SubjectDTO;
   });
