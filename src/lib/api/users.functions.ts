@@ -17,12 +17,23 @@ import type { ManagedUserDTO } from "@/lib/api/types";
  * an audit entry plus notifications once the change succeeds.
  */
 
-async function assertAdmin(context: {
+type RpcContext = {
   supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown }> };
   userId: string;
-}) {
+};
+
+async function assertAdmin(context: RpcContext) {
   const { data } = await context.supabase.rpc("is_admin", { _user_id: context.userId });
   if (!data) throw new Error("You do not have permission to manage users.");
+}
+
+/** True only for callers who already hold the Super Admin role themselves. */
+async function isSuperAdmin(context: RpcContext) {
+  const { data } = await context.supabase.rpc("has_role", {
+    _user_id: context.userId,
+    _role: "super_admin",
+  });
+  return Boolean(data);
 }
 
 async function describeUser(
