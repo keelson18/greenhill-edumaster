@@ -69,7 +69,9 @@ const EMPTY_NEW_USER = {
 function UsersPage() {
   const { user, isAdmin } = useAuth();
   // Only an existing Super Admin may hand out the Super Admin role.
-  const assignableRoles = user?.isSuperAdmin ? ROLES : ROLES.filter((r) => r !== "super_admin");
+  const assignableRoles: readonly AppRole[] = user?.isSuperAdmin
+    ? ROLES
+    : ROLES.filter((r) => r !== "super_admin");
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<ManagedUserDTO | null>(null);
