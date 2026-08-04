@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileDown, Plus, Printer, Save, Trophy, Lock } from "lucide-react";
+import { BookPlus, FileDown, Plus, Printer, Save, Trophy, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +45,7 @@ import {
 } from "@/config/app.config";
 import {
   createExam,
+  createSubject,
   getMarkSheet,
   listExams,
   listSubjects,
@@ -116,6 +117,7 @@ function ExamsPage() {
   const [dirty, setDirty] = useState(false);
   const [reportStudentId, setReportStudentId] = useState<string | null>(null);
   const [newExamOpen, setNewExamOpen] = useState(false);
+  const [newSubjectOpen, setNewSubjectOpen] = useState(false);
 
   const examsQuery = useQuery({
     queryKey: ["exams", termId],
@@ -235,6 +237,11 @@ function ExamsPage() {
       actions={
         <>
           <TermSelect />
+          {isAdmin && (
+            <Button variant="outline" onClick={() => setNewSubjectOpen(true)}>
+              <BookPlus className="mr-1.5 size-4" aria-hidden /> New subject
+            </Button>
+          )}
           {canEdit && (
             <Button onClick={() => setNewExamOpen(true)} disabled={locked}>
               <Plus className="mr-1.5 size-4" /> New examination
@@ -555,6 +562,15 @@ function ExamsPage() {
         </Tabs>
       )}
 
+      <NewSubjectDialog
+        open={newSubjectOpen}
+        onOpenChange={setNewSubjectOpen}
+        onCreated={() => {
+          queryClient.invalidateQueries({ queryKey: ["subjects"] });
+          queryClient.invalidateQueries({ queryKey: ["marksheet"] });
+        }}
+      />
+
       <NewExamDialog
         open={newExamOpen}
         onOpenChange={setNewExamOpen}
@@ -565,6 +581,84 @@ function ExamsPage() {
         }}
       />
     </AppLayout>
+  );
+}
+
+function NewSubjectDialog({
+  open,
+  onOpenChange,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: () => void;
+}) {
+  const [code, setCode] = useState("");
+  const [name, setName] = useState("");
+  const [sortOrder, setSortOrder] = useState("0");
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      createSubject({ data: { code, name, sortOrder: Number(sortOrder) || 0 } }),
+    onSuccess: (subject) => {
+      toast.success(`${subject.name} added`);
+      onCreated();
+      onOpenChange(false);
+      setCode("");
+      setName("");
+      setSortOrder("0");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New subject</DialogTitle>
+          <DialogDescription>
+            Subjects appear as columns in marks entry and on every report card.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Code</Label>
+              <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="RME"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Display order</Label>
+              <Input
+                type="number"
+                min={0}
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Name</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Religious & Moral Education"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button disabled={mutation.isPending} onClick={() => mutation.mutate()}>
+            {mutation.isPending ? "Adding\u2026" : "Add subject"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
