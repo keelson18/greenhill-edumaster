@@ -51,15 +51,44 @@ export function AppLayout({
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const { term } = useTerm();
-  const { user, signOut } = useAuth();
+  const { user, profileLoading, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const displayName = user?.fullName?.trim() || user?.email || "Staff member";
   const sections = useMemo(() => navFor(user?.roles ?? []), [user?.roles]);
+  // New accounts carry no role until an administrator grants one.
+  const awaitingAccess = !profileLoading && Boolean(user) && (user?.roles.length ?? 0) === 0;
 
 
   async function handleSignOut() {
     await signOut();
   }
+
+  if (awaitingAccess) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-background p-6">
+        <div className="max-w-md space-y-4 rounded-xl border bg-card p-8 text-center">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <GraduationCap className="size-6" aria-hidden />
+          </div>
+          <h1 className="text-lg font-semibold">Awaiting access approval</h1>
+          <p className="text-sm text-muted-foreground">
+            Your account for {SCHOOL.name} has been created, but an administrator still
+            needs to grant you a role before any school records become visible.
+          </p>
+          <p className="text-xs text-muted-foreground">Signed in as {displayName}</p>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"
+          >
+            <LogOut className="size-4" aria-hidden /> Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+
 
 
   return (
