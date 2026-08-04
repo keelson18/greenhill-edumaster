@@ -813,6 +813,7 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_finance: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       term_dashboard_stats: { Args: { _term_code: string }; Returns: Json }
       term_grade_performance: {
         Args: { _term_code: string }
