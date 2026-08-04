@@ -133,6 +133,19 @@ export const updateUserSchema = z.object({
   phone: ghanaPhoneSchema.optional().or(z.literal("")),
 });
 
+export const subjectInputSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(2)
+    .max(12)
+    .regex(/^[A-Za-z0-9-]+$/, "Use letters, digits or dashes only")
+    .transform((v) => v.toUpperCase()),
+  name: z.string().trim().min(2).max(80),
+  sortOrder: z.number().int().min(0).max(999).default(0),
+});
+export type SubjectInput = z.infer<typeof subjectInputSchema>;
+
 export const createUserSchema = z.object({
   email: z.string().trim().email("Enter a valid email address").max(255),
   fullName: z.string().trim().min(2).max(120),
