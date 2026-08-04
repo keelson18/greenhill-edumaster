@@ -69,10 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const signOut = useCallback(async () => {
+    // Leave the protected screen first so its queries unmount and cannot
+    // refetch against a cleared session (which 401s the server functions).
+    await router.navigate({ to: "/auth", replace: true });
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
-    router.navigate({ to: "/auth", replace: true });
   }, [queryClient, router]);
 
   const value = useMemo<AuthContextValue>(
