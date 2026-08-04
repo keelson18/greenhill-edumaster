@@ -40,10 +40,16 @@ export const listFeeRecords = createServerFn({ method: "GET" })
       .order("full_name")
       .limit(400);
     if (data.search) {
-      studentQuery = studentQuery.or(
-        `full_name.ilike.%${data.search}%,admission_no.ilike.%${data.search}%`,
-      );
+      // Strip PostgREST filter-control characters so a search term cannot
+      // inject extra OR conditions into the query.
+      const term = data.search.replace(/[%,()]/g, " ").trim();
+      if (term) {
+        studentQuery = studentQuery.or(
+          `full_name.ilike.%${term}%,admission_no.ilike.%${term}%`,
+        );
+      }
     }
+
 
     const [{ data: students, error }, { data: payments, error: payError }] = await Promise.all([
       studentQuery,
