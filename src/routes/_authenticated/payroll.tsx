@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/payroll")({
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
 
 function PayrollPage() {
-  const { isAdmin, hasRole } = useAuth();
+  const { isAdmin, hasRole, session } = useAuth();
   const canRun = isAdmin || hasRole("accountant");
   const queryClient = useQueryClient();
   const [period, setPeriod] = useState(currentPeriod());
@@ -40,6 +40,7 @@ function PayrollPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["payroll", period],
     queryFn: () => listPayroll({ data: { period } }),
+    enabled: Boolean(session),
   });
 
   const run = useMutation({
