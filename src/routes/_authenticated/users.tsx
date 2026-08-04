@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, ShieldCheck, Trash2, Pencil, UserCheck, UserX } from "lucide-react";
+import { Search, ShieldCheck, Trash2, Pencil, UserCheck, UserPlus, UserX } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +28,7 @@ import {
 import { ROLES, ROLE_DESCRIPTIONS, ROLE_LABELS, type AppRole } from "@/config/app.config";
 import {
   assignRole,
+  createUser,
   deleteUser,
   listUsers,
   setUserSuspended,
@@ -58,6 +59,13 @@ export const Route = createFileRoute("/_authenticated/users")({
   component: UsersPage,
 });
 
+const EMPTY_NEW_USER = {
+  fullName: "",
+  email: "",
+  password: "",
+  role: "teacher" as AppRole,
+};
+
 function UsersPage() {
   const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -65,6 +73,8 @@ function UsersPage() {
   const [editing, setEditing] = useState<ManagedUserDTO | null>(null);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newUser, setNewUser] = useState(EMPTY_NEW_USER);
 
   const query = useQuery({
     queryKey: ["managed-users"],
@@ -73,6 +83,18 @@ function UsersPage() {
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["managed-users"] });
+
+  const createMutation = useMutation({
+    mutationFn: (input: typeof EMPTY_NEW_USER) => createUser({ data: input }),
+    onSuccess: () => {
+      invalidate();
+      setCreateOpen(false);
+      setNewUser(EMPTY_NEW_USER);
+      toast.success("Account created");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
 
   const roleMutation = useMutation({
     mutationFn: (input: { userId: string; role: AppRole }) => assignRole({ data: input }),
@@ -267,6 +289,13 @@ function UsersPage() {
     <AppLayout
       title="User management"
       subtitle="Assign roles, suspend access and keep staff contact details current."
+      actions={
+        user?.isSuperAdmin ? (
+          <Button onClick={() => setCreateOpen(true)}>
+            <UserPlus className="mr-1.5 size-4" aria-hidden /> Add user
+          </Button>
+        ) : undefined
+      }
     >
       <StatCards stats={stats} />
 
@@ -307,6 +336,75 @@ function UsersPage() {
           ))}
         </CardContent>
       </Card>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add user</DialogTitle>
+            <DialogDescription>
+              Create a staff account and grant it a role. The person can sign in immediately with
+              the password you set here.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Full name</Label>
+              <Input
+                value={newUser.fullName}
+                onChange={(e) => setNewUser((p) => ({ ...p, fullName: e.target.value }))}
+                placeholder="Ama Mensah"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Email</Label>
+              <Input
+                type="email"
+                value={newUser.email}
+                onChange={(e) => setNewUser((p) => ({ ...p, email: e.target.value }))}
+                placeholder="ama.mensah@school.edu.gh"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Temporary password</Label>
+              <Input
+                type="text"
+                value={newUser.password}
+                onChange={(e) => setNewUser((p) => ({ ...p, password: e.target.value }))}
+                placeholder="At least 8 characters"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Role</Label>
+              <Select
+                value={newUser.role}
+                onValueChange={(role) => setNewUser((p) => ({ ...p, role: role as AppRole }))}
+              >
+                <SelectTrigger aria-label="Role for the new account">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {ROLE_LABELS[r]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={createMutation.isPending}
+              onClick={() => createMutation.mutate(newUser)}
+            >
+              {createMutation.isPending ? "Creating…" : "Create account"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent>

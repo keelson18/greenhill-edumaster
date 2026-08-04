@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   assignRoleSchema,
+  createUserSchema,
   suspendUserSchema,
   updateUserSchema,
   uuidSchema,
@@ -223,4 +224,59 @@ export const deleteUser = createServerFn({ method: "POST" })
       link: "/audit-log",
     });
     return { userId: data.userId };
+  });
+
+/**
+ * Creates a staff account directly. Super Admin only: it provisions the auth
+ * user with a confirmed email, then grants the chosen role.
+ */
+export const createUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => createUserSchema.parse(input))
+  .handler(async ({ data, context }): Promise<{ userId: string }> => {
+    const { data: isSuper } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "super_admin",
+    });
+    if (!isSuper) throw new Error("Only a Super Admin can create accounts.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { full_name: data.fullName },
+    });
+    if (error || !created.user) {
+      throw new Error(`Unable to create the account: ${error?.message ?? "unknown error"}`);
+    }
+    const newUserId = created.user.id;
+
+    await supabaseAdmin
+      .from("profiles")
+      .update({ full_name: data.fullName, email: data.email })
+      .eq("id", newUserId);
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", newUserId);
+    const { error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: newUserId, role: data.role });
+    if (roleError) throw new Error(`Account created, but the role failed: ${roleError.message}`);
+
+    const actor = await resolveActor(context.supabase as never, context.userId);
+    await recordAudit(context.supabase as never, {
+      actor,
+      action: "role_assigned",
+      entityType: "user",
+      entityId: newUserId,
+      entityLabel: data.fullName,
+      summary: `Created the account for ${data.fullName} as ${ROLE_LABELS[data.role]}`,
+      metadata: { email: data.email, to: data.role },
+    });
+    await notifyUsers(context.supabase as never, [newUserId], {
+      title: "Welcome to EduMaster",
+      body: `${actor.name} created your account with the ${ROLE_LABELS[data.role]} role.`,
+      category: "account",
+      link: "/dashboard",
+    });
+    return { userId: newUserId };
   });
