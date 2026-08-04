@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/timetable")({
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as const;
 
 function TimetablePage() {
-  const [classLevel, setClassLevel] = useState<string>(GRADE_LEVELS[6]);
+  const [classLevel, setClassLevel] = useState<string>(GRADE_LEVELS[8]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["timetable", classLevel],
