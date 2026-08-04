@@ -302,5 +302,5 @@ export const createUser = createServerFn({ method: "POST" })
       category: "account",
       link: "/dashboard",
     });
-    return { userId: newUserId };
+    return { ok: true, userId: newUserId };
   });
