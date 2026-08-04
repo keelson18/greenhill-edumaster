@@ -23,11 +23,17 @@ import {
  */
 export function NotificationBell() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
+  const signedIn = Boolean(session);
   const query = useQuery({
-    queryKey: ["notifications"],
+    queryKey: ["notifications", session?.user.id],
     queryFn: () => listNotifications(),
-    refetchInterval: 60_000,
+    // Never poll without a session: the server fn requires a bearer token and
+    // would throw "Unauthorized" into the error boundary right after sign-out.
+    enabled: signedIn,
+    refetchInterval: signedIn ? 60_000 : false,
     staleTime: 30_000,
+    retry: false,
   });
 
   const items = query.data ?? [];
