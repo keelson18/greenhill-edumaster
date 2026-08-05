@@ -98,7 +98,7 @@ export const getSessionUser = createServerFn({ method: "GET" })
     const [{ data: profile }, { data: roleRows }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("full_name, email, is_suspended")
+        .select("full_name, email, phone, is_suspended")
         .eq("id", userId)
         .maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
@@ -113,6 +113,7 @@ export const getSessionUser = createServerFn({ method: "GET" })
       id: userId,
       email: profile?.email ?? (claims.email as string | undefined) ?? null,
       fullName: profile?.full_name || "Staff member",
+      phone: profile?.phone ?? null,
       roles,
       primaryRole,
       isSuspended: Boolean(profile?.is_suspended),

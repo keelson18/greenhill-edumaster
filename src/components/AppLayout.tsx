@@ -5,11 +5,13 @@ import {
   ChevronDown,
   LogOut,
   Menu,
+  Settings,
 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { SCHOOL_PROFILE, ROLE_LABELS } from "@/config/app.config";
-import { navFor } from "@/config/nav";
+import { canAccess, labelForPath, navFor } from "@/config/nav";
+import { ForbiddenPanel } from "@/components/RoleGuard";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,8 +24,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { TermSelect } from "@/components/TermSelect";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTerm } from "@/lib/term-context";
 import { useAuth } from "@/lib/auth-context";
+
 
 const SCHOOL = SCHOOL_PROFILE;
 
@@ -57,6 +61,11 @@ export function AppLayout({
   const sections = useMemo(() => navFor(user?.roles ?? []), [user?.roles]);
   // New accounts carry no role until an administrator grants one.
   const awaitingAccess = !profileLoading && Boolean(user) && (user?.roles.length ?? 0) === 0;
+  // Layout-level route guard: the sidebar metadata is the single source of
+  // truth for who may open which page, so every screen inherits it.
+  const denied =
+    !profileLoading && Boolean(user) && !awaitingAccess && !canAccess(path, user?.roles ?? []);
+
 
 
   async function handleSignOut() {
@@ -172,7 +181,9 @@ export function AppLayout({
             </div>
             <div className="ml-auto flex items-center gap-3">
               <TermSelect className="hidden sm:flex" />
+              <ThemeToggle />
               <NotificationBell />
+
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -200,6 +211,11 @@ export function AppLayout({
                     </span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings">
+                      <Settings className="mr-2 size-4" aria-hidden /> My settings
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => void handleSignOut()}>
                     <LogOut className="mr-2 size-4" aria-hidden /> Sign out
                   </DropdownMenuItem>
@@ -213,21 +229,24 @@ export function AppLayout({
           <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
             <div>
               <div className="mb-1 flex items-center gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+                <h1 className="text-2xl font-semibold tracking-tight">{denied ? "Access denied" : title}</h1>
                 <Badge variant="secondary" className="rounded-full text-[10px]">
                   {term.label}
                 </Badge>
               </div>
-              {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+              {subtitle && !denied && <p className="text-sm text-muted-foreground">{subtitle}</p>}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <TermSelect className="sm:hidden" />
-              {actions}
-            </div>
+            {!denied && (
+              <div className="flex flex-wrap items-center gap-2">
+                <TermSelect className="sm:hidden" />
+                {actions}
+              </div>
+            )}
           </div>
-          {children}
+          {denied ? <ForbiddenPanel area={labelForPath(path) ?? title} /> : children}
         </main>
       </div>
     </div>
   );
+
 }

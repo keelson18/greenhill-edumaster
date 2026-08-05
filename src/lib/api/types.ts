@@ -101,6 +101,7 @@ export interface SessionUser {
   id: string;
   email: string | null;
   fullName: string;
+  phone: string | null;
   roles: AppRole[];
   primaryRole: AppRole;
   isSuspended: boolean;
@@ -283,4 +284,34 @@ export interface NotificationDTO {
   link: string | null;
   readAt: string | null;
   createdAt: string;
+}
+
+/** One learner row on the daily attendance sheet. */
+export interface StudentAttendanceRowDTO {
+  studentId: string;
+  fullName: string;
+  admissionNo: string;
+  classLevel: string;
+  stream: string;
+  status: "present" | "absent" | "late" | "excused" | null;
+  note: string | null;
+}
+
+/** One staff row on the daily attendance sheet. */
+export interface StaffAttendanceRowDTO {
+  staffId: string;
+  fullName: string;
+  staffNo: string;
+  jobTitle: string;
+  department: string;
+  status: "present" | "absent" | "late" | "excused" | null;
+  note: string | null;
+}
+
+export interface AttendanceSummaryDTO {
+  records: number;
+  daysRecorded: number;
+  /** Percentage of marked records that were present or late. */
+  presentRate: number;
+  absentCount: number;
 }

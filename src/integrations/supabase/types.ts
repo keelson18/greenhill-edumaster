@@ -543,6 +543,91 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_attendance: {
+        Row: {
+          attended_on: string
+          created_at: string
+          id: string
+          note: string | null
+          recorded_by: string | null
+          staff_id: string
+          status: Database["public"]["Enums"]["attendance_status"]
+          updated_at: string
+        }
+        Insert: {
+          attended_on?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          recorded_by?: string | null
+          staff_id: string
+          status?: Database["public"]["Enums"]["attendance_status"]
+          updated_at?: string
+        }
+        Update: {
+          attended_on?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          recorded_by?: string | null
+          staff_id?: string
+          status?: Database["public"]["Enums"]["attendance_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_attendance_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_attendance: {
+        Row: {
+          attended_on: string
+          class_level: string
+          created_at: string
+          id: string
+          note: string | null
+          recorded_by: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          attended_on?: string
+          class_level: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          recorded_by?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          attended_on?: string
+          class_level?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          recorded_by?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           admission_no: string
@@ -833,6 +918,7 @@ export type Database = {
         | "accountant"
         | "librarian"
         | "staff"
+      attendance_status: "present" | "absent" | "late" | "excused"
       audit_action:
         | "role_assigned"
         | "user_suspended"
@@ -982,6 +1068,7 @@ export const Constants = {
         "librarian",
         "staff",
       ],
+      attendance_status: ["present", "absent", "late", "excused"],
       audit_action: [
         "role_assigned",
         "user_suspended",
