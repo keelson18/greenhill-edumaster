@@ -260,3 +260,47 @@ export const auditQuerySchema = paginationSchema.extend({
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 export type AuditQuery = z.infer<typeof auditQuerySchema>;
+
+/** Daily attendance. Statuses mirror the `attendance_status` database enum. */
+export const ATTENDANCE_STATUSES = ["present", "absent", "late", "excused"] as const;
+export const attendanceStatusSchema = z.enum(ATTENDANCE_STATUSES);
+export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
+
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
+
+export const attendanceQuerySchema = z.object({
+  date: isoDateSchema,
+  classLevel: z.enum(GRADE_LEVELS).optional(),
+});
+export type AttendanceQuery = z.infer<typeof attendanceQuerySchema>;
+
+export const saveStudentAttendanceSchema = z.object({
+  date: isoDateSchema,
+  classLevel: z.enum(GRADE_LEVELS),
+  entries: z
+    .array(
+      z.object({
+        studentId: uuidSchema,
+        status: attendanceStatusSchema,
+        note: z.string().trim().max(200).optional().or(z.literal("")),
+      }),
+    )
+    .min(1)
+    .max(200),
+});
+export type SaveStudentAttendanceInput = z.infer<typeof saveStudentAttendanceSchema>;
+
+export const saveStaffAttendanceSchema = z.object({
+  date: isoDateSchema,
+  entries: z
+    .array(
+      z.object({
+        staffId: uuidSchema,
+        status: attendanceStatusSchema,
+        note: z.string().trim().max(200).optional().or(z.literal("")),
+      }),
+    )
+    .min(1)
+    .max(400),
+});
+export type SaveStaffAttendanceInput = z.infer<typeof saveStaffAttendanceSchema>;

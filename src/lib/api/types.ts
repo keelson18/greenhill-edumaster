@@ -101,6 +101,7 @@ export interface SessionUser {
   id: string;
   email: string | null;
   fullName: string;
+  phone: string | null;
   roles: AppRole[];
   primaryRole: AppRole;
   isSuspended: boolean;

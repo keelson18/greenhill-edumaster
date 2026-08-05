@@ -12,6 +12,8 @@ import {
   Bus,
   ShieldCheck,
   ScrollText,
+  Settings,
+
   type LucideIcon,
 } from "lucide-react";
 import type { AppRole } from "@/config/app.config";
@@ -71,6 +73,7 @@ export const NAV_SECTIONS: ReadonlyArray<{ group: string; items: readonly NavIte
     items: [
       { to: "/users", label: "User Management", icon: ShieldCheck, roles: ADMINISTRATION },
       { to: "/audit-log", label: "Audit Log", icon: ScrollText, roles: ADMINISTRATION },
+      { to: "/settings", label: "My Settings", icon: Settings, roles: ALL },
     ],
   },
 ];
@@ -82,3 +85,23 @@ export function navFor(roles: readonly AppRole[]) {
     items: section.items.filter((item) => item.roles.some((r) => effective.includes(r))),
   })).filter((section) => section.items.length > 0);
 }
+
+/** Roles permitted on a pathname, or `undefined` when the route is unrestricted. */
+export function rolesForPath(pathname: string): readonly AppRole[] | undefined {
+  const match = NAV_SECTIONS.flatMap((s) => s.items)
+    .filter((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))
+    .sort((a, b) => b.to.length - a.to.length)[0];
+  return match?.roles;
+}
+
+/** Human label for a pathname, used in the access-denied message. */
+export function labelForPath(pathname: string): string | undefined {
+  return NAV_SECTIONS.flatMap((s) => s.items).find((item) => pathname === item.to)?.label;
+}
+
+export function canAccess(pathname: string, roles: readonly AppRole[]): boolean {
+  const required = rolesForPath(pathname);
+  if (!required || required.length === 0) return true;
+  return roles.some((r) => required.includes(r));
+}
+
