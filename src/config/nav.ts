@@ -56,8 +56,10 @@ export const NAV_SECTIONS: ReadonlyArray<{ group: string; items: readonly NavIte
       { to: "/teachers", label: "Staff & Teachers", icon: Users, roles: ADMINISTRATION },
       { to: "/timetable", label: "Timetable", icon: CalendarDays, roles: [...ALL] },
       { to: "/homework", label: "Homework", icon: BookOpen, roles: [...ACADEMIC, "student", "parent"] },
+      { to: "/attendance", label: "Attendance", icon: CalendarCheck, roles: [...ACADEMIC, "staff"] },
     ],
   },
+
   {
     group: "Operations",
     items: [
