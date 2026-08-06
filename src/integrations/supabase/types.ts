@@ -628,6 +628,41 @@ export type Database = {
           },
         ]
       }
+      student_guardians: {
+        Row: {
+          created_at: string
+          guardian_id: string
+          id: string
+          relationship: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          guardian_id: string
+          id?: string
+          relationship?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          guardian_id?: string
+          id?: string
+          relationship?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_guardians_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           admission_no: string
@@ -649,6 +684,7 @@ export type Database = {
           stream: string
           town: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           admission_no: string
@@ -670,6 +706,7 @@ export type Database = {
           stream?: string
           town?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           admission_no?: string
@@ -691,6 +728,7 @@ export type Database = {
           stream?: string
           town?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -888,6 +926,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_student: {
+        Args: { _student_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -5,6 +5,7 @@ import {
   ClipboardList,
   CalendarDays,
   CalendarCheck,
+  Users2,
 
   BookOpen,
   Wallet,
@@ -59,6 +60,12 @@ export const NAV_SECTIONS: ReadonlyArray<{ group: string; items: readonly NavIte
       { to: "/timetable", label: "Timetable", icon: CalendarDays, roles: [...ALL] },
       { to: "/homework", label: "Homework", icon: BookOpen, roles: [...ACADEMIC, "student", "parent"] },
       { to: "/attendance", label: "Attendance", icon: CalendarCheck, roles: [...ACADEMIC, "staff"] },
+      {
+        to: "/portal",
+        label: "Family Portal",
+        icon: Users2,
+        roles: ["super_admin", "admin", "student", "parent"],
+      },
     ],
   },
 
