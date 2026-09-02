@@ -82,13 +82,13 @@ function LandingPage() {
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="max-w-2xl">
             <p className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
-              <BarChart3 className="size-3.5" aria-hidden /> Built for the Kenyan CBC curriculum
+              <BarChart3 className="size-3.5" aria-hidden /> Built for Ghanaian basic schools
             </p>
             <h1 className="mt-5 text-4xl font-semibold tracking-tight sm:text-5xl">
               Run your whole school from one place
             </h1>
             <p className="mt-4 text-lg text-muted-foreground">
-              {APP_META.name} brings learner records, CBC examinations, report cards, attendance and
+              {APP_META.name} brings learner records, examinations, report cards, attendance and
               fees in {SCHOOL_PROFILE.currency} into a single secure system for {SCHOOL_PROFILE.name}.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
