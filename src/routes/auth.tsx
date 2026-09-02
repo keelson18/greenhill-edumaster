@@ -23,12 +23,12 @@ export const Route = createFileRoute("/auth")({
       {
         name: "description",
         content:
-          "Secure staff sign-in for EduMaster — manage CBC learners, examinations, marks and fees for your school.",
+          "Secure staff sign-in for EduMaster — manage learners, examinations, marks and fees for your school.",
       },
       { property: "og:title", content: "Sign in · EduMaster School Management" },
       {
         property: "og:description",
-        content: "Secure staff sign-in for the EduMaster CBC school management system.",
+        content: "Secure staff sign-in for the EduMaster school management system.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

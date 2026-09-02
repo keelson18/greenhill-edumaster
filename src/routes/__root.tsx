@@ -82,17 +82,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "EduMaster | CBC School Management System" },
+      { title: "EduMaster | Ghana School Management System" },
       {
         name: "description",
         content:
-          "EduMaster is a CBC school management system for Kenyan schools: students, exams, fees in KES, attendance and staff from PP1 to Grade 9.",
+          "EduMaster is a school management system for Ghanaian basic schools: students, exams, fees in Ghana cedis, attendance and staff from KG1 to Basic 9.",
       },
       { name: "author", content: "EduMaster" },
-      { property: "og:title", content: "EduMaster | CBC School Management System" },
+      { property: "og:title", content: "EduMaster | Ghana School Management System" },
       {
         property: "og:description",
-        content: "Manage students, CBC examinations, fees and staff for Kenyan schools.",
+        content: "Manage students, examinations, fees and staff for Ghanaian basic schools.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

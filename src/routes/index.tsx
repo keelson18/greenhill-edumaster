@@ -14,17 +14,17 @@ const FEATURES = [
   {
     icon: GraduationCap,
     title: "Learner records",
-    body: "NEMIS numbers, admission details, guardians and fee balances for every learner from PP1 to Grade 9.",
+    body: "GES identifiers, admission details, guardians and fee balances for every learner from KG1 to Basic 9.",
   },
   {
     icon: ClipboardCheck,
-    title: "CBC assessment",
-    body: "Capture marks per subject, rank learners and publish EE / ME / AE / BE report cards per term.",
+    title: "Termly assessment",
+    body: "Capture marks per subject, rank learners and publish termly report cards aligned to the Ghanaian standards-based curriculum.",
   },
   {
     icon: Wallet,
-    title: "Fees in KES",
-    body: "Track billing, M-Pesa and bank collections, and outstanding balances across every academic term.",
+    title: "Fees in Ghana cedis",
+    body: "Track billing, Mobile Money and bank collections, and outstanding balances across every academic term.",
   },
   {
     icon: ShieldCheck,
@@ -36,17 +36,20 @@ const FEATURES = [
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "EduMaster · CBC School Management for Kenyan Schools" },
+      { title: "EduMaster · School Management for Ghanaian Basic Schools" },
       {
         name: "description",
         content:
-          "EduMaster manages CBC learners, examinations, report cards and fees in KES for Kenyan primary and junior secondary schools, PP1 to Grade 9.",
+          "EduMaster manages learners, examinations, report cards, attendance and fees in Ghana cedis for basic schools from KG1 to Basic 9.",
       },
-      { property: "og:title", content: "EduMaster · CBC School Management for Kenyan Schools" },
+      {
+        property: "og:title",
+        content: "EduMaster · School Management for Ghanaian Basic Schools",
+      },
       {
         property: "og:description",
         content:
-          "Learner records, CBC marks entry, ranking, report cards and fee tracking in one secure system.",
+          "Learner records, marks entry, ranking, report cards and fee tracking in one secure system.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -79,13 +82,13 @@ function LandingPage() {
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="max-w-2xl">
             <p className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
-              <BarChart3 className="size-3.5" aria-hidden /> Built for the Kenyan CBC curriculum
+              <BarChart3 className="size-3.5" aria-hidden /> Built for Ghanaian basic schools
             </p>
             <h1 className="mt-5 text-4xl font-semibold tracking-tight sm:text-5xl">
               Run your whole school from one place
             </h1>
             <p className="mt-4 text-lg text-muted-foreground">
-              {APP_META.name} brings learner records, CBC examinations, report cards, attendance and
+              {APP_META.name} brings learner records, examinations, report cards, attendance and
               fees in {SCHOOL_PROFILE.currency} into a single secure system for {SCHOOL_PROFILE.name}.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
