@@ -27,7 +27,9 @@ describe("currency formatting", () => {
   });
 
   it("keeps negative balances readable", () => {
-    expect(formatCurrencyCompact(-2_500)).toBe("₵ -2K");
+    // toFixed rounds halfway values away from zero for both signs.
+    expect(formatCurrencyCompact(-2_500)).toBe("₵ -3K");
+    expect(formatCurrencyCompact(2_500)).toBe("₵ 3K");
   });
 });
 
