@@ -51,7 +51,7 @@ Privileged work uses the server-only admin client. **No rotation required.**
 | Notifications | REAL in-app | No email/SMS delivery |
 | Parent/Student portal | REAL | Guardian links + per-term view |
 | Expenses, financial reports, events | MISSING | |
-| Tests | MISSING | zero tests, no runner installed |
+| Tests | PARTIALLY REAL | 47 passing Vitest tests; live database integration and browser end-to-end coverage remain |
 
 ## 4. Authorization — real or cosmetic?
 
@@ -81,8 +81,10 @@ code and has been **deleted**; no module imports mock data any more.
 
 ## 7. Remaining prioritised backlog
 
-1. **Testing (highest)** — Vitest + Testing Library on RBAC, marks calculation,
-   term locking, fee balances; Playwright smoke on login → marks → report card.
+1. **Testing (highest)** — Vitest installed; 47 tests pass covering navigation RBAC,
+   grading, mark validation, term-lock server handlers and fee balances (2026-09-12).
+   Server-handler tests mock database responses; live RLS/trigger integration tests,
+   Testing Library UI tests and Playwright login → marks → report card remain.
 2. **Finance completion** — fee structures, discounts/scholarships, receipts,
    expenses, financial reports.
 3. **Exam lifecycle** — moderation → approval → publication states, so results
