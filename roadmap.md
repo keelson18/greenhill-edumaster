@@ -7,3 +7,9 @@
 Verification: `bunx vitest run` — 47 tests passed across three files on 2026-09-12; preview build OK.
 Scope: role navigation, grading/formatting, actual server handlers with mocked database responses, mark validation, lock error handling, lock administration, fee records and summaries.
 Limitation: database mocks do not verify live row-level security or trigger enforcement; live database integration and browser end-to-end tests remain separate follow-up work.
+
+# Public-page redesign
+
+- [ ] Apply the selected Neo-Swiss editorial direction to the homepage.
+- [ ] Apply the same direction to sign-in, registration, and password reset.
+- [ ] Verify desktop and mobile presentation and page actions.
