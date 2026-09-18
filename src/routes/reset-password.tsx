@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { APP_META } from "@/config/app.config";
+import { AuthShell } from "@/components/AuthShell";
+
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -86,23 +86,10 @@ function ResetPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex flex-col items-center gap-2 text-center">
-          <span className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-            <GraduationCap className="size-6" aria-hidden />
-          </span>
-          <h1 className="text-2xl font-semibold tracking-tight">{APP_META.name}</h1>
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Choose a new password</CardTitle>
-            <CardDescription>
-              Set a password you don&apos;t use anywhere else, then you&apos;ll be taken into the
-              app.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+    <AuthShell>
+      <p className="mb-3 text-xs font-medium uppercase text-primary">Account recovery</p>
+      <h1 className="font-display text-4xl sm:text-5xl">A new password.</h1>
+      <p className="mb-8 mt-4 text-sm leading-6 text-muted-foreground">Choose a password you don’t use anywhere else.</p>
             {!ready ? (
               <div className="flex justify-center py-6">
                 <Loader2 className="size-5 animate-spin text-primary" aria-label="Loading" />
@@ -158,9 +145,6 @@ function ResetPasswordPage() {
                 </Button>
               </form>
             )}
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+    </AuthShell>
   );
 }
