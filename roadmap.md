@@ -1,5 +1,11 @@
 # Test-suite completion
 
+# Full audit — 2026-09-18
+
+- [ ] Review tests, runtime, dependencies, database access and server/page code.
+- [ ] Fix confirmed security and reliability issues and add regression coverage.
+- [ ] Verify fixes and document remaining limitations in AUDIT.md.
+
 - [x] Run existing role-access and grading tests; correct the rounding expectation.
 - [x] Add server-handler regression tests for term locking and fee balances.
 - [x] Run the completed suite and record verification and limitations.
