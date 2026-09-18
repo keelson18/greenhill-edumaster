@@ -10,6 +10,8 @@ Limitation: database mocks do not verify live row-level security or trigger enfo
 
 # Public-page redesign
 
-- [ ] Apply the selected Neo-Swiss editorial direction to the homepage.
-- [ ] Apply the same direction to sign-in, registration, and password reset.
-- [ ] Verify desktop and mobile presentation and page actions.
+- [x] Apply the selected Neo-Swiss editorial direction to the homepage.
+- [x] Apply the same direction to sign-in, registration, and password reset.
+- [x] Verify desktop and mobile presentation and page actions.
+
+Verified sign-in rendering, registration validation, forgot-password navigation, expired recovery state, and mobile overflow checks. Latest preview build OK. No live account creation or email delivery test performed.
