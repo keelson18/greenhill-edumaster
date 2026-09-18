@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AuthShell } from "@/components/AuthShell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { APP_META, SCHOOL_PROFILE } from "@/config/app.config";
@@ -67,64 +67,37 @@ function AuthPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex flex-col items-center gap-2 text-center">
-          <span className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-            <GraduationCap className="size-6" aria-hidden />
-          </span>
-          <h1 className="text-2xl font-semibold tracking-tight">{APP_META.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            {SCHOOL_PROFILE.name} · {APP_META.tagline}
-          </p>
-        </div>
-
-        {forgot ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Reset your password</CardTitle>
-              <CardDescription>
-                We&apos;ll email you a link to choose a new password.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ForgotPasswordForm onBack={() => setForgot(false)} />
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <Tabs defaultValue="signin">
-              <CardHeader className="pb-3">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="signin">Sign in</TabsTrigger>
-                  <TabsTrigger value="signup">Create account</TabsTrigger>
-                </TabsList>
-              </CardHeader>
-              <CardContent>
-                <TabsContent value="signin" className="mt-0">
-                  <CredentialsForm mode="signin" destination={destination} />
-                  <button
-                    type="button"
-                    onClick={() => setForgot(true)}
-                    className="mt-3 w-full text-center text-xs font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </button>
-                </TabsContent>
-                <TabsContent value="signup" className="mt-0">
-                  <CredentialsForm mode="signup" destination={destination} />
-                </TabsContent>
-              </CardContent>
-            </Tabs>
-          </Card>
-        )}
-
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          The first account created becomes the school administrator. Later accounts wait for an
-          administrator to grant a role.
-        </p>
-      </div>
-    </main>
+    <AuthShell>
+      {forgot ? (
+        <>
+          <p className="mb-3 text-xs font-medium uppercase text-primary">Account recovery</p>
+          <h1 className="font-display text-4xl sm:text-5xl">A fresh start.</h1>
+          <p className="mb-8 mt-4 text-sm leading-6 text-muted-foreground">We’ll email you a link to choose a new password.</p>
+          <ForgotPasswordForm onBack={() => setForgot(false)} />
+        </>
+      ) : (
+        <Tabs defaultValue="signin">
+          <TabsList className="mb-9 grid h-11 w-full grid-cols-2 rounded-md bg-brand-mint p-1">
+            <TabsTrigger value="signin">Sign in</TabsTrigger>
+            <TabsTrigger value="signup">Create account</TabsTrigger>
+          </TabsList>
+          <TabsContent value="signin" className="mt-0">
+            <p className="mb-3 text-xs font-medium uppercase text-primary">Your school, connected</p>
+            <h1 className="font-display text-4xl sm:text-5xl">Welcome back.</h1>
+            <p className="mb-8 mt-4 text-sm leading-6 text-muted-foreground">Sign in to {SCHOOL_PROFILE.name}.</p>
+            <CredentialsForm mode="signin" destination={destination} />
+            <Button type="button" variant="link" onClick={() => setForgot(true)} className="mt-3 h-10 w-full text-sm">Forgot your password?</Button>
+          </TabsContent>
+          <TabsContent value="signup" className="mt-0">
+            <p className="mb-3 text-xs font-medium uppercase text-primary">Join your school</p>
+            <h1 className="font-display text-4xl sm:text-5xl">Start here.</h1>
+            <p className="mb-8 mt-4 text-sm leading-6 text-muted-foreground">Create your {APP_META.name} account.</p>
+            <CredentialsForm mode="signup" destination={destination} />
+            <p className="mt-5 text-xs leading-5 text-muted-foreground">Your school administrator manages account access and roles.</p>
+          </TabsContent>
+        </Tabs>
+      )}
+    </AuthShell>
   );
 }
 
@@ -279,7 +252,7 @@ function CredentialsForm({
             autoComplete="name"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            placeholder="Jane Kamau"
+            placeholder="Full name"
             required
             maxLength={120}
           />
@@ -294,7 +267,7 @@ function CredentialsForm({
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@school.ac.ke"
+          placeholder="you@school.edu.gh"
           required
           maxLength={255}
         />
