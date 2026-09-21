@@ -92,5 +92,10 @@
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.16",
     "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "browserslist": "^4.29.0",
+    "baseline-browser-mapping": "^2.11.24",
+    "js-yaml": "^5.4.2"
   }
 }
