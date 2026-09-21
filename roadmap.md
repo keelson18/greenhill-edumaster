@@ -27,3 +27,11 @@ Limitation: database mocks do not verify live row-level security or trigger enfo
 - [x] Verify desktop and mobile presentation and page actions.
 
 Verified sign-in rendering, registration validation, forgot-password navigation, expired recovery state, and mobile overflow checks. Latest preview build OK. No live account creation or email delivery test performed.
+
+# Requested security hardening and housekeeping
+
+- [ ] Environment example, accurate README, canonical migration history and single lockfile.
+- [ ] Live grants/policy cleanup and trusted audit insertion.
+- [ ] Exam publication gate with administrator controls and family visibility protection.
+- [ ] Atomic role replacement and defensive grading with regression tests.
+- [ ] Verify changes and document remaining limitations.
