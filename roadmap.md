@@ -2,9 +2,15 @@
 
 # Full audit — 2026-09-18
 
-- [ ] Review tests, runtime, dependencies, database access and server/page code.
-- [ ] Fix confirmed security and reliability issues and add regression coverage.
-- [ ] Verify fixes and document remaining limitations in AUDIT.md.
+- [x] Review tests, runtime, dependencies, database access and server/page code.
+- [x] Fix confirmed security and reliability issues and add regression coverage.
+- [x] Verify fixes and document remaining limitations in AUDIT.md.
+
+Verification (2026-09-21): 47 tests pass, preview build OK, security scan clean, dependency scan
+reports no known vulnerabilities after pinning browserslist, baseline-browser-mapping and js-yaml.
+Fixed this pass: account-suspension protection, family-portal access checks, term-lock bypasses,
+sign-out ordering.
+Remaining: live database integration tests, browser end-to-end coverage, email/SMS delivery.
 
 - [x] Run existing role-access and grading tests; correct the rounding expectation.
 - [x] Add server-handler regression tests for term locking and fee balances.

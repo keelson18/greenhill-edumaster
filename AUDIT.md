@@ -92,6 +92,10 @@ code and has been **deleted**; no module imports mock data any more.
 4. **Academic lifecycle** — promotion, transfer, graduation, cumulative transcripts.
 5. **Email/SMS delivery** for notifications (needs a verified sender domain).
 6. **Rate limiting / brute-force protection** on auth-adjacent endpoints.
+
+Audit re-run 2026-09-21: 47 tests pass, build OK, platform security scan clean, and the
+dependency scan reports no known vulnerabilities after pinning browserslist,
+baseline-browser-mapping and js-yaml.
 7. **Multi-tenancy** — only if SaaS is confirmed.
 
 ## 8. Definition-of-done answers
