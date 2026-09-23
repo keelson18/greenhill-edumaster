@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
  * Server-only helpers that write the administrative audit trail and fan out
@@ -51,8 +52,9 @@ export async function recordAudit(
     metadata?: Record<string, string | number | boolean | null>;
   },
 ) {
+  void supabase; // authorisation happens in the caller; writing is server-trusted only
   try {
-    const { error } = await (supabase as never as SupabaseClient).from("audit_logs").insert({
+    const { error } = await (supabaseAdmin as never as SupabaseClient).from("audit_logs").insert({
       actor_id: entry.actor.id,
       actor_name: entry.actor.name,
       actor_email: entry.actor.email,
@@ -77,8 +79,9 @@ export async function notifyUsers(
 ) {
   const unique = [...new Set(recipients.filter(Boolean))];
   if (unique.length === 0) return;
+  void supabase;
   try {
-    const { error } = await (supabase as never as SupabaseClient).from("notifications").insert(
+    const { error } = await (supabaseAdmin as never as SupabaseClient).from("notifications").insert(
       unique.map((userId) => ({
         user_id: userId,
         title: notice.title,

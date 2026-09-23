@@ -99,34 +99,26 @@ export const assignRole = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ userId: string; role: AppRole }> => {
     await assertAdmin(context as never);
 
-    const { data: previous } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", data.userId);
-
-    // Only an existing Super Admin may grant the Super Admin role or take it
-    // away from someone else — otherwise a plain Admin could escalate itself.
-    const heldSuperAdmin = (previous ?? []).some((r) => r.role === "super_admin");
-    if (data.role === "super_admin" || heldSuperAdmin) {
-      if (!(await isSuperAdmin(context as never))) {
-        throw new Error("Only a Super Admin can grant or remove the Super Admin role.");
+    // One transactional database operation: it re-checks the caller's
+    // permission, blocks self-changes and Super Admin escalation, serialises
+    // competing changes, and swaps the role atomically.
+    const { data: previousRoles, error } = await (
+      context.supabase as never as {
+        rpc: (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{ data: string | null; error: { message: string } | null }>;
       }
-    }
-
-    const { error: clearError } = await context.supabase
-      .from("user_roles")
-      .delete()
-      .eq("user_id", data.userId);
-    if (clearError) throw new Error(`Unable to update the role: ${clearError.message}`);
-
-    const { error } = await context.supabase
-      .from("user_roles")
-      .insert({ user_id: data.userId, role: data.role });
-    if (error) throw new Error(`Unable to assign the role: ${error.message}`);
+    ).rpc("replace_user_role", { _target_id: data.userId, _role: data.role });
+    if (error) throw new Error(error.message.replace(/^.*?:\s*/, ""));
 
     const actor = await resolveActor(context.supabase as never, context.userId);
     const target = await describeUser(context.supabase as never, data.userId);
-    const before = (previous ?? []).map((r) => ROLE_LABELS[r.role as AppRole]).join(", ") || "none";
+    const before =
+      (previousRoles ?? "none")
+        .split(", ")
+        .map((r) => ROLE_LABELS[r as AppRole] ?? r)
+        .join(", ") || "none";
 
     await recordAudit(context.supabase as never, {
       actor,
