@@ -1,7 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookPlus, FileDown, Plus, Printer, Save, Trophy, Lock } from "lucide-react";
+import {
+  BookPlus,
+  FileDown,
+  Plus,
+  Printer,
+  Save,
+  Trophy,
+  Lock,
+  Send,
+  Undo2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +60,7 @@ import {
   listExams,
   listSubjects,
   saveMarks,
+  setExamPublished,
 } from "@/lib/api/school.functions";
 import { formatDate, mean, perfLabel, perfLevel } from "@/lib/domain/grading";
 import { useTerm } from "@/lib/term-context";
@@ -175,9 +186,15 @@ function ExamsPage() {
       )
     : 0;
 
+  const published = Boolean(activeExam?.isPublished);
+
   const setMark = (studentId: string, subjectId: string, value: string) => {
     if (locked) {
       toast.error(`${term.label} is closed — reopen the term to edit marks`);
+      return;
+    }
+    if (published) {
+      toast.error("Results are published — withdraw them before changing marks");
       return;
     }
     const numeric = value === "" ? 0 : Math.max(0, Math.min(100, Number(value)));
@@ -207,6 +224,20 @@ function ExamsPage() {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["grade-performance"] });
       toast.success(`${result.saved} marks saved for ${grade}`);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: (next: boolean) =>
+      setExamPublished({ data: { examId: activeExamId!, published: next } }),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["exams", termId] });
+      toast.success(
+        result.published
+          ? "Results published — families can now see them"
+          : "Results withdrawn from families",
+      );
     },
     onError: (error: Error) => toast.error(error.message),
   });

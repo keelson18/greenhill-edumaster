@@ -63,7 +63,10 @@ export type Database = {
           ends_on: string
           grade_scope: string
           id: string
+          is_published: boolean
           name: string
+          published_at: string | null
+          published_by: string | null
           starts_on: string
           status: Database["public"]["Enums"]["exam_status"]
           term_id: string
@@ -75,7 +78,10 @@ export type Database = {
           ends_on: string
           grade_scope?: string
           id?: string
+          is_published?: boolean
           name: string
+          published_at?: string | null
+          published_by?: string | null
           starts_on: string
           status?: Database["public"]["Enums"]["exam_status"]
           term_id: string
@@ -87,7 +93,10 @@ export type Database = {
           ends_on?: string
           grade_scope?: string
           id?: string
+          is_published?: boolean
           name?: string
+          published_at?: string | null
+          published_by?: string | null
           starts_on?: string
           status?: Database["public"]["Enums"]["exam_status"]
           term_id?: string
@@ -930,6 +939,7 @@ export type Database = {
         Args: { _student_id: string; _user_id: string }
         Returns: boolean
       }
+      exam_is_published: { Args: { _exam_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -941,6 +951,13 @@ export type Database = {
       is_finance: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      replace_user_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _target_id: string
+        }
+        Returns: string
+      }
       term_dashboard_stats: { Args: { _term_code: string }; Returns: Json }
       term_grade_performance: {
         Args: { _term_code: string }

@@ -95,10 +95,13 @@ export function formatPhone(value: string | null | undefined): string {
   return `+233 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5)}`;
 }
 
+/** Bands sorted highest threshold first, so band order in config cannot skew grading. */
+const SORTED_BANDS = [...PERF_BANDS].sort((a, b) => b.min - a.min);
+
 /** Maps a percentage score onto its GES proficiency band. */
 export function perfLevel(percentage: number): PerfLevel {
-  const band = PERF_BANDS.find((b) => percentage >= b.min);
-  return (band ?? PERF_BANDS[PERF_BANDS.length - 1]).level;
+  const band = SORTED_BANDS.find((b) => percentage >= b.min);
+  return (band ?? SORTED_BANDS[SORTED_BANDS.length - 1]).level;
 }
 
 export function perfLabel(level: PerfLevel): string {
