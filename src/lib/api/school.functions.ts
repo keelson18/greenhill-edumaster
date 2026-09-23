@@ -361,8 +361,37 @@ export const listExams = createServerFn({ method: "GET" })
       endsOn: e.ends_on,
       status: e.status,
       marksEntered: (e.marks as unknown as { count: number }[] | null)?.[0]?.count ?? 0,
+      isPublished: Boolean(e.is_published),
+      publishedAt: e.published_at,
     }));
   });
+
+/**
+ * Publishes or withdraws an examination's results. Publication is what makes
+ * marks visible to parents and learners, so it is administrator-only and the
+ * database re-checks that permission independently.
+ */
+export const setExamPublished = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => {
+    const value = (input ?? {}) as { examId?: string; published?: boolean };
+    return { examId: uuidSchema.parse(value.examId), published: Boolean(value.published) };
+  })
+  .handler(async ({ data, context }): Promise<{ examId: string; published: boolean }> => {
+    const { supabase, userId } = context;
+
+    const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: userId });
+    if (!isAdmin) throw new Error("Only an administrator can publish or withdraw results.");
+
+    const { error } = await supabase
+      .from("exams")
+      .update({ is_published: data.published })
+      .eq("id", data.examId);
+    if (error) throw new Error(`Unable to update publication: ${error.message}`);
+
+    return { examId: data.examId, published: data.published };
+  });
+
 
 export const createExam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
