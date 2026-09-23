@@ -345,7 +345,9 @@ export const listExams = createServerFn({ method: "GET" })
 
     const { data: exams, error } = await supabase
       .from("exams")
-      .select("id, name, grade_scope, starts_on, ends_on, status, marks(count)")
+      .select(
+        "id, name, grade_scope, starts_on, ends_on, status, is_published, published_at, marks(count)",
+      )
       .eq("term_id", term.id)
       .order("starts_on", { ascending: true });
     if (error) throw new Error(`Unable to load examinations: ${error.message}`);

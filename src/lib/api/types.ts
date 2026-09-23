@@ -69,6 +69,8 @@ export interface ExamDTO {
   endsOn: string;
   status: ExamStatus;
   marksEntered: number;
+  isPublished: boolean;
+  publishedAt: string | null;
 }
 
 export interface MarkSheetRow {

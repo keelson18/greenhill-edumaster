@@ -27,14 +27,6 @@ async function assertAdmin(context: RpcContext) {
   if (!data) throw new Error("You do not have permission to manage users.");
 }
 
-/** True only for callers who already hold the Super Admin role themselves. */
-async function isSuperAdmin(context: RpcContext) {
-  const { data } = await context.supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "super_admin",
-  });
-  return Boolean(data);
-}
 
 async function describeUser(
   supabase: { from: (t: string) => never },
