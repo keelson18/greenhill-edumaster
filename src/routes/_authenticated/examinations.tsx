@@ -186,9 +186,15 @@ function ExamsPage() {
       )
     : 0;
 
+  const published = Boolean(activeExam?.isPublished);
+
   const setMark = (studentId: string, subjectId: string, value: string) => {
     if (locked) {
       toast.error(`${term.label} is closed — reopen the term to edit marks`);
+      return;
+    }
+    if (published) {
+      toast.error("Results are published — withdraw them before changing marks");
       return;
     }
     const numeric = value === "" ? 0 : Math.max(0, Math.min(100, Number(value)));
@@ -218,6 +224,20 @@ function ExamsPage() {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["grade-performance"] });
       toast.success(`${result.saved} marks saved for ${grade}`);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: (next: boolean) =>
+      setExamPublished({ data: { examId: activeExamId!, published: next } }),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["exams", termId] });
+      toast.success(
+        result.published
+          ? "Results published — families can now see them"
+          : "Results withdrawn from families",
+      );
     },
     onError: (error: Error) => toast.error(error.message),
   });
