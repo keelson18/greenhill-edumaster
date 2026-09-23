@@ -1,7 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookPlus, FileDown, Plus, Printer, Save, Trophy, Lock } from "lucide-react";
+import {
+  BookPlus,
+  FileDown,
+  Plus,
+  Printer,
+  Save,
+  Trophy,
+  Lock,
+  Send,
+  Undo2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +60,7 @@ import {
   listExams,
   listSubjects,
   saveMarks,
+  setExamPublished,
 } from "@/lib/api/school.functions";
 import { formatDate, mean, perfLabel, perfLevel } from "@/lib/domain/grading";
 import { useTerm } from "@/lib/term-context";
