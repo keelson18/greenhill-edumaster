@@ -8,6 +8,13 @@
       "when": 1789693643052,
       "tag": "0000_audit_access_and_term_lock_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790125765109,
+      "tag": "0001_exam_publication_and_trusted_audit",
+      "breakpoints": true
     }
   ]
 }
