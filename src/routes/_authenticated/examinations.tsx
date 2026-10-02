@@ -322,10 +322,27 @@ function ExamsPage() {
           {activeExam && (
             <div className="flex flex-wrap items-center gap-2 pb-1">
               <Badge variant="secondary">{activeExam.status}</Badge>
+              <Badge variant={published ? "default" : "outline"}>
+                {published ? "Published" : "Not published"}
+              </Badge>
               <span className="text-xs text-muted-foreground">
                 {formatDate(activeExam.startsOn)} – {formatDate(activeExam.endsOn)} ·{" "}
                 {activeExam.marksEntered} marks recorded
               </span>
+              {isAdmin && (
+                <Button
+                  size="sm"
+                  variant={published ? "outline" : "default"}
+                  disabled={publishMutation.isPending}
+                  onClick={() => publishMutation.mutate(!published)}
+                >
+                  {publishMutation.isPending
+                    ? "Updating…"
+                    : published
+                      ? "Withdraw results"
+                      : "Publish results"}
+                </Button>
+              )}
             </div>
           )}
           {locked && (
