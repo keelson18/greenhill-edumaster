@@ -30,8 +30,8 @@ Verified sign-in rendering, registration validation, forgot-password navigation,
 
 # Requested security hardening and housekeeping
 
-- [ ] Environment example, accurate README, canonical migration history and single lockfile.
-- [ ] Live grants/policy cleanup and trusted audit insertion.
-- [ ] Exam publication gate with administrator controls and family visibility protection.
-- [ ] Atomic role replacement and defensive grading with regression tests.
-- [ ] Verify changes and document remaining limitations.
+- [x] Environment example, accurate README, canonical migration history and single lockfile.
+- [x] Live grants/policy cleanup and trusted audit insertion.
+- [x] Exam publication gate with administrator controls and family visibility protection.
+- [x] Atomic role replacement and defensive grading with regression tests.
+- [x] Verify changes and document remaining limitations.
