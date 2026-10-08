@@ -125,10 +125,11 @@ describe("page access by role", () => {
     expect(canAccess("/examinations", ["teacher"])).toBe(true);
     expect(canAccess("/users", ["teacher"])).toBe(false);
   });
-  it("parents are limited to the family portal", () => {
+  it("parents get the family portal and results page, never the student register", () => {
     expect(canAccess("/portal", ["parent"])).toBe(true);
+    expect(canAccess("/examinations", ["parent"])).toBe(true); // rows filtered by the database
     expect(canAccess("/students", ["parent"])).toBe(false);
-    expect(canAccess("/examinations", ["parent"])).toBe(false);
+    expect(canAccess("/users", ["parent"])).toBe(false);
   });
 });
 
