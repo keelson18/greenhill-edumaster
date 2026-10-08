@@ -1,0 +1,16 @@
+REVOKE EXECUTE ON FUNCTION public.can_view_student(uuid, uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.exam_is_published(uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.is_admin(uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.is_finance(uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.is_staff(uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.is_super_admin(uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.replace_user_role(uuid, public.app_role) FROM anon, public;
+GRANT EXECUTE ON FUNCTION public.can_view_student(uuid, uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.exam_is_published(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_admin(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_finance(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_staff(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.replace_user_role(uuid, public.app_role) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_super_admin(uuid) TO service_role;
