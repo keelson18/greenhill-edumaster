@@ -13,7 +13,12 @@ const termInput = (input: unknown) => ({
   search: String((input as { search?: string })?.search ?? "")
     .trim()
     .slice(0, 80),
+  // How many learners to return. The server fetches one extra row so the page
+  // can tell whether more exist ("Load more") instead of silently cutting off.
+  limit: Math.min(Math.max(Number((input as { limit?: number })?.limit) || FEE_PAGE_SIZE, 1), 2000),
 });
+
+export const FEE_PAGE_SIZE = 100;
 
 async function resolveTermId(
   supabase: { from: (t: string) => any },
@@ -38,7 +43,7 @@ export const listFeeRecords = createServerFn({ method: "GET" })
       .from("students")
       .select("id, full_name, admission_no, grade_level, fee_billed")
       .order("full_name")
-      .limit(400);
+      .limit(data.limit + 1);
     if (data.search) {
       // Strip PostgREST filter-control characters so a search term cannot
       // inject extra OR conditions into the query.
