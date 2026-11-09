@@ -9,8 +9,9 @@ export const Route = createFileRoute("/api/public/health")({
         const started = Date.now();
         let database: "ok" | "unavailable" = "unavailable";
         try {
-          const url = process.env["SUPABASE_URL"];
-          const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+          const url = process.env["SUPABASE_URL"] ?? import.meta.env.VITE_SUPABASE_URL;
+          const key =
+            process.env["SUPABASE_PUBLISHABLE_KEY"] ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
           if (url && key) {
             const res = await fetch(`${url}/auth/v1/health`, {
               headers: { apikey: key },
