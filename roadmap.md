@@ -35,3 +35,12 @@ Verified sign-in rendering, registration validation, forgot-password navigation,
 - [x] Exam publication gate with administrator controls and family visibility protection.
 - [x] Atomic role replacement and defensive grading with regression tests.
 - [x] Verify changes and document remaining limitations.
+
+# Framework audit — 2026-11-09
+- [x] Live rule tests skip with a reason when the database is unreachable (no false failures).
+- [x] Public uptime check at /api/public/health (no school data returned).
+- [ ] Fees list: replace silent 400-learner cap with paging.
+- [ ] Remove 21 type escapes; split Examinations/Students pages; move effect fetching to loaders.
+- [ ] Signed-in browser checks (blocked: needs test accounts / reachable backend).
+- [ ] Email/SMS alerts (blocked: provider choice).
+Verification: 57 passed, 5 skipped (backend unreachable from sandbox), code check clean.

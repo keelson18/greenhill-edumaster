@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 // Reads the live database's access rules and pins the ones that decide who
 // sees learner records and exam results. Skipped when no database URL is set.
@@ -6,8 +6,23 @@ const url = process.env["DB_URL"] ?? process.env["SUPABASE_DB_URL"];
 
 describe.skipIf(!url)("live access rules for learners and results", async () => {
   const { default: postgres } = await import("postgres");
-  const sql = postgres(url!, { max: 1, ssl: "require" });
+  const sql = postgres(url!, { max: 1, ssl: "require", connect_timeout: 10 });
   afterAll(() => sql.end());
+
+  // A database that can't be reached is an environment problem, not a rule
+  // change: skip (with a reason) instead of reporting a false regression.
+  let unreachable: string | null = null;
+  beforeAll(async () => {
+    try {
+      await sql`select 1`;
+    } catch (e) {
+      unreachable = e instanceof Error ? e.message : String(e);
+      console.warn(`[live rules] database unreachable, skipping: ${unreachable}`);
+    }
+  });
+  beforeEach((ctx) => {
+    if (unreachable) ctx.skip();
+  });
 
   const policies = async (table: string) =>
     sql<{ cmd: string; qual: string | null }[]>`
