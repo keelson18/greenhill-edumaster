@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { AppLayout } from "@/components/AppLayout";
 import { DataTable, StatCards } from "@/components/DataTable";
-import { listFeeRecords, getFeeSummary, recordFeePayment } from "@/lib/api/finance.functions";
+import { FEE_PAGE_SIZE, listFeeRecords, getFeeSummary, recordFeePayment } from "@/lib/api/finance.functions";
 import { formatCurrency } from "@/lib/domain/grading";
 import { useTerm } from "@/lib/term-context";
 import { useAuth } from "@/lib/auth-context";
@@ -175,6 +175,13 @@ function FeesPage() {
               },
             ]}
           />
+          {hasMore && (
+            <div className="mt-4 flex justify-center">
+              <Button variant="outline" onClick={() => setLimit((l) => l + FEE_PAGE_SIZE)}>
+                Load more learners
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
