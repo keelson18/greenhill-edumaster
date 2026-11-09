@@ -59,11 +59,22 @@ function FeesPage() {
     reference: "",
   });
 
+  const [limit, setLimit] = useState(FEE_PAGE_SIZE);
+  const [debounced, setDebounced] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebounced(search.trim());
+      setLimit(FEE_PAGE_SIZE);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
   const records = useQuery({
-    queryKey: ["fee-records", termCode],
-    queryFn: () => listFeeRecords({ data: { termCode } }),
+    queryKey: ["fee-records", termCode, debounced, limit],
+    queryFn: () => listFeeRecords({ data: { termCode, search: debounced, limit } }),
     enabled: Boolean(termCode),
+    placeholderData: (prev) => prev,
   });
+  const hasMore = (records.data?.length ?? 0) > limit;
   const summary = useQuery({
     queryKey: ["fee-summary", termCode],
     queryFn: () => getFeeSummary({ data: { termCode } }),
@@ -71,12 +82,13 @@ function FeesPage() {
   });
 
   const rows = useMemo(() => {
+    const loaded = (records.data ?? []).slice(0, limit);
     const term = search.trim().toLowerCase();
-    if (!term) return records.data ?? [];
-    return (records.data ?? []).filter((r) =>
+    if (!term) return loaded;
+    return loaded.filter((r) =>
       [r.fullName, r.admissionNo, r.gradeLevel].some((v) => v.toLowerCase().includes(term)),
     );
-  }, [records.data, search]);
+  }, [records.data, search, limit]);
 
   const post = useMutation({
     mutationFn: () =>
