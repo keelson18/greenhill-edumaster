@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import { AppLayout } from "@/components/AppLayout";
 import { DataTable, StatCards } from "@/components/DataTable";
-import { FEE_PAGE_SIZE, listFeeRecords, getFeeSummary, recordFeePayment } from "@/lib/api/finance.functions";
+import { listFeeRecords, getFeeSummary, recordFeePayment } from "@/lib/api/finance.functions";
+import { FEE_PAGE_SIZE } from "@/lib/api/finance.query";
 import { formatCurrency } from "@/lib/domain/grading";
 import { useTerm } from "@/lib/term-context";
 import { useAuth } from "@/lib/auth-context";
@@ -39,6 +40,8 @@ export const Route = createFileRoute("/_authenticated/fees")({
       },
       { property: "og:title", content: "Fees & Finance | EduMaster" },
       { property: "og:description", content: "Billing, collections and arrears in Ghana cedis." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: FeesPage,
@@ -47,7 +50,7 @@ export const Route = createFileRoute("/_authenticated/fees")({
 const METHODS = ["Mobile Money", "Bank transfer", "Cash", "Cheque"] as const;
 
 function FeesPage() {
-  const { isAdmin, hasRole } = useAuth();
+  const { session, isAdmin, hasRole } = useAuth();
   const canPost = isAdmin || hasRole("accountant");
   const { termId: termCode } = useTerm();
   const queryClient = useQueryClient();
@@ -59,48 +62,46 @@ function FeesPage() {
     reference: "",
   });
 
-  const [limit, setLimit] = useState(FEE_PAGE_SIZE);
   const [debounced, setDebounced] = useState("");
   useEffect(() => {
     const t = setTimeout(() => {
       setDebounced(search.trim());
-      setLimit(FEE_PAGE_SIZE);
     }, 300);
     return () => clearTimeout(t);
   }, [search]);
-  const records = useQuery({
-    queryKey: ["fee-records", termCode, debounced, limit],
-    queryFn: () => listFeeRecords({ data: { termCode, search: debounced, limit } }),
-    enabled: Boolean(termCode),
-    placeholderData: (prev) => prev,
+  const records = useInfiniteQuery({
+    queryKey: ["fee-records", termCode, debounced],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => listFeeRecords({
+      data: { termCode, search: debounced, offset: pageParam, limit: FEE_PAGE_SIZE },
+    }),
+    getNextPageParam: (lastPage, _pages, offset) =>
+      lastPage.length > FEE_PAGE_SIZE ? offset + FEE_PAGE_SIZE : undefined,
+    enabled: Boolean(session && termCode),
   });
-  const hasMore = (records.data?.length ?? 0) > limit;
   const summary = useQuery({
     queryKey: ["fee-summary", termCode],
     queryFn: () => getFeeSummary({ data: { termCode } }),
-    enabled: Boolean(termCode),
+    enabled: Boolean(session && termCode),
   });
 
-  const rows = useMemo(() => {
-    const loaded = (records.data ?? []).slice(0, limit);
-    const term = search.trim().toLowerCase();
-    if (!term) return loaded;
-    return loaded.filter((r) =>
-      [r.fullName, r.admissionNo, r.gradeLevel].some((v) => v.toLowerCase().includes(term)),
-    );
-  }, [records.data, search, limit]);
+  const rows = useMemo(() => records.data?.pages.flatMap(
+    (page) => page.slice(0, FEE_PAGE_SIZE),
+  ) ?? [], [records.data]);
 
   const post = useMutation({
-    mutationFn: () =>
-      recordFeePayment({
+    mutationFn: () => {
+      if (!target) throw new Error("Select a learner before recording a payment.");
+      return recordFeePayment({
         data: {
-          studentId: target!.studentId,
+          studentId: target.studentId,
           termCode,
           amount: Number(payment.amount),
           method: payment.method,
           reference: payment.reference,
         },
-      }),
+      });
+    },
     onSuccess: () => {
       toast.success("Payment recorded");
       setTarget(null);
@@ -125,6 +126,7 @@ function FeesPage() {
       subtitle="Learner billing, collections and arrears for the selected term."
     >
       <StatCards stats={stats} />
+      {summary.error && <p role="alert" className="mb-4 text-destructive">{summary.error.message}</p>}
       <Card>
         <CardContent className="p-5">
           <Input
@@ -175,10 +177,11 @@ function FeesPage() {
               },
             ]}
           />
-          {hasMore && (
+          {records.hasNextPage && (
             <div className="mt-4 flex justify-center">
-              <Button variant="outline" onClick={() => setLimit((l) => l + FEE_PAGE_SIZE)}>
-                Load more learners
+              <Button variant="outline" disabled={records.isFetchingNextPage}
+                onClick={() => void records.fetchNextPage()}>
+                {records.isFetchingNextPage ? "Loading…" : "Load more learners"}
               </Button>
             </div>
           )}

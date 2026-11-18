@@ -36,6 +36,8 @@ export const Route = createFileRoute("/_authenticated/inventory")({
       },
       { property: "og:title", content: "Inventory | EduMaster" },
       { property: "og:description", content: "Assets, consumables and stock levels in cedis." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: InventoryPage,

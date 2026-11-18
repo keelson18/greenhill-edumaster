@@ -2,26 +2,17 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { feePaymentSchema, termCodeSchema } from "@/lib/validation/schemas";
 import type { FeeRecordDTO, FeeSummaryDTO } from "@/lib/api/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
+import { feeListInput, feeSearchFilter, readAllPages } from "./finance.query";
 
 /**
  * Fees & finance boundary. Reads are open to staff (RLS enforced); writes are
  * limited to finance roles by the database policies on `fee_payments`.
  */
 
-const termInput = (input: unknown) => ({
-  termCode: termCodeSchema.parse((input as { termCode: string })?.termCode),
-  search: String((input as { search?: string })?.search ?? "")
-    .trim()
-    .slice(0, 80),
-  // How many learners to return. The server fetches one extra row so the page
-  // can tell whether more exist ("Load more") instead of silently cutting off.
-  limit: Math.min(Math.max(Number((input as { limit?: number })?.limit) || FEE_PAGE_SIZE, 1), 2000),
-});
-
-export const FEE_PAGE_SIZE = 100;
-
 async function resolveTermId(
-  supabase: { from: (t: string) => any },
+  supabase: SupabaseClient<Database>,
   termCode: string,
 ): Promise<string> {
   const { data, error } = await supabase
@@ -30,12 +21,12 @@ async function resolveTermId(
     .eq("code", termCode)
     .maybeSingle();
   if (error || !data) throw new Error("That academic term could not be found.");
-  return data.id as string;
+  return data.id;
 }
 
 export const listFeeRecords = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(termInput)
+  .inputValidator((input: unknown) => feeListInput.parse(input))
   .handler(async ({ data, context }): Promise<FeeRecordDTO[]> => {
     const termId = await resolveTermId(context.supabase, data.termCode);
 
@@ -43,25 +34,21 @@ export const listFeeRecords = createServerFn({ method: "GET" })
       .from("students")
       .select("id, full_name, admission_no, grade_level, fee_billed")
       .order("full_name")
-      .limit(data.limit + 1);
-    if (data.search) {
-      // Strip PostgREST filter-control characters so a search term cannot
-      // inject extra OR conditions into the query.
-      const term = data.search.replace(/[%,()]/g, " ").trim();
-      if (term) {
-        studentQuery = studentQuery.or(
-          `full_name.ilike.%${term}%,admission_no.ilike.%${term}%`,
-        );
-      }
-    }
+      .order("id")
+      .range(data.offset, data.offset + data.limit);
+    const filter = feeSearchFilter(data.search);
+    if (filter) studentQuery = studentQuery.or(filter);
 
-
-    const [{ data: students, error }, { data: payments, error: payError }] = await Promise.all([
-      studentQuery,
-      context.supabase.from("fee_payments").select("student_id, amount").eq("term_id", termId),
-    ]);
+    const { data: students, error } = await studentQuery;
     if (error) throw new Error(`Unable to load learners: ${error.message}`);
-    if (payError) throw new Error(`Unable to load payments: ${payError.message}`);
+    if (!students?.length) return [];
+    const payments = await readAllPages(
+      (from, to) => context.supabase.from("fee_payments")
+        .select("student_id, amount").eq("term_id", termId)
+        .in("student_id", students.map((student) => student.id))
+        .order("id").range(from, to),
+      "payments",
+    );
 
     const paidBy = new Map<string, number>();
     for (const p of payments ?? []) {
@@ -91,9 +78,12 @@ export const getFeeSummary = createServerFn({ method: "GET" })
   .handler(async ({ data, context }): Promise<FeeSummaryDTO> => {
     const termId = await resolveTermId(context.supabase, data.termCode);
 
-    const [{ data: students }, { data: payments }] = await Promise.all([
-      context.supabase.from("students").select("id, fee_billed"),
-      context.supabase.from("fee_payments").select("student_id, amount").eq("term_id", termId),
+    const [students, payments] = await Promise.all([
+      readAllPages((from, to) => context.supabase.from("students")
+        .select("id, fee_billed").order("id").range(from, to), "learners"),
+      readAllPages((from, to) => context.supabase.from("fee_payments")
+        .select("student_id, amount").eq("term_id", termId)
+        .order("id").range(from, to), "payments"),
     ]);
 
     const billed = (students ?? []).reduce((sum, s) => sum + Number(s.fee_billed), 0);

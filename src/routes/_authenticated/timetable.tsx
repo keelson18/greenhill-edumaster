@@ -24,6 +24,8 @@ export const Route = createFileRoute("/_authenticated/timetable")({
       },
       { property: "og:title", content: "Timetable | EduMaster" },
       { property: "og:description", content: "Weekly lesson schedule by class and period." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: TimetablePage,

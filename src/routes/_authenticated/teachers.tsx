@@ -36,6 +36,8 @@ export const Route = createFileRoute("/_authenticated/teachers")({
         property: "og:description",
         content: "Staff establishment, subject allocation and salaries.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: StaffPage,

@@ -42,6 +42,8 @@ export const Route = createFileRoute("/_authenticated/homework")({
       },
       { property: "og:title", content: "Homework | EduMaster" },
       { property: "og:description", content: "Assignments issued, due and closed." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: HomeworkPage,

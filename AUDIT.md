@@ -1,5 +1,29 @@
 # GreenHill EduMaster — Chief Architect Audit (evidence-backed)
 
+## Follow-up — 2026-11-18
+
+- Fees uses real offset paging (100 learners per page plus one lookahead), rather
+  than a growing limit capped at 2,000 or the platform response limit. Stable
+  name/id ordering prevents tie-related paging instability.
+- Search runs across names, admission numbers and classes in the database.
+  Removed the local-only filter that could hide remote matches.
+- Payment reads are scoped to loaded learner IDs and explicitly paged; summary
+  reads traverse all visible learners/payments and fail visibly on read errors.
+- Fee query inputs use Zod; finance uses the generated typed client. Shared
+  pagination helpers are browser-safe and do not import server functions.
+- Learner and examination creation dialogs are separate feature components;
+  selection and mutation behavior is unchanged. Missing leaf sharing metadata added.
+- Automated checks: 67 tests passed, 5 live database tests skipped because the
+  database cannot be reached. Preview build OK after Fees changes. Public home
+  rendered and signed-out `/fees` redirected to `/auth?redirect=%2Ffees` with no
+  browser runtime errors.
+- Authenticated acceptance remains unverified: session minting failed because
+  the database is unavailable. No live payment write or authenticated paging,
+  learner editing, marks entry or publication test was performed. Protected
+  loader migration is deferred until it can be checked with a real session.
+
+The sections below are historical findings, not a fresh security certification.
+
 Date: 2026-09-02. Scope: full repository + live backend schema.
 
 ## 1. What the system actually is today

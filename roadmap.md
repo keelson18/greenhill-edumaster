@@ -39,8 +39,16 @@ Verified sign-in rendering, registration validation, forgot-password navigation,
 # Framework audit — 2026-11-09
 - [x] Live rule tests skip with a reason when the database is unreachable (no false failures).
 - [x] Public uptime check at /api/public/health (no school data returned).
-- [ ] Fees list: replace silent 400-learner cap with paging.
-- [ ] Remove 21 type escapes; split Examinations/Students pages; move effect fetching to loaders.
+- [x] Fees list: replace silent 400-learner cap with paging and regression tests.
+- [x] Remove the remaining production `any` client escape; leave generated router casts untouched.
+- [x] Split learner and examination creation/edit forms into focused components.
+- [ ] Signed-in examination/learner form verification (blocked: database unavailable for session minting).
+- [ ] Verify protected loader changes against a signed-in session (blocked: database unavailable; existing queries retained).
 - [ ] Signed-in browser checks (blocked: needs test accounts / reachable backend).
 - [ ] Email/SMS alerts (blocked: provider choice).
 Verification: 57 passed, 5 skipped (backend unreachable from sandbox), code check clean.
+
+2026-11-18 follow-up: fee lists use stable 100-row ranges with one lookahead,
+server-side class/name/admission searches and no overall learner cap. Payments and
+summary reads traverse explicit ranges and surface errors. Ten new regressions added.
+Signed-out Fees navigation redirects to sign-in; no browser runtime errors observed.

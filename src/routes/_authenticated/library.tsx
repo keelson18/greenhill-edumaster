@@ -46,6 +46,8 @@ export const Route = createFileRoute("/_authenticated/library")({
       },
       { property: "og:title", content: "Library | EduMaster" },
       { property: "og:description", content: "Catalogue, lending and overdue returns." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: LibraryPage,

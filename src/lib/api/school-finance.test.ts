@@ -33,7 +33,7 @@ function database(responses: Record<string, { data?: unknown; error?: unknown }>
   const from = vi.fn((table: string) => {
     const result = responses[table] ?? { data: null, error: null };
     const query: any = {};
-    for (const method of ["select", "eq", "order", "limit", "or", "update", "insert", "upsert", "in"]) {
+    for (const method of ["select", "eq", "order", "limit", "or", "update", "insert", "upsert", "in", "range"]) {
       query[method] = vi.fn(() => query);
     }
     query.maybeSingle = vi.fn(async () => result);
@@ -154,5 +154,37 @@ describe("term fee balances", () => {
   it("surfaces payment read failures rather than inventing balances", async () => {
     const db = database({ terms: { data: { id } }, students: { data: [learner] }, fee_payments: { error: { message: "unavailable" } } });
     await expect(invoke(listFeeRecords, db, { termCode })).rejects.toThrow("Unable to load payments");
+  });
+
+  it("reads 100 learners plus a lookahead and advances to the next range", async () => {
+    const first = fees([learner], []);
+    await invoke(listFeeRecords, first, { termCode });
+    expect(first.queries.students.range).toHaveBeenCalledWith(0, 100);
+    const next = fees([learner], []);
+    await invoke(listFeeRecords, next, { termCode, offset: 100 });
+    expect(next.queries.students.range).toHaveBeenCalledWith(100, 200);
+    expect(next.queries.students.order).toHaveBeenCalledWith("id");
+  });
+
+  it("searches classes in the database, not just the displayed learners", async () => {
+    const db = fees([learner], []);
+    await invoke(listFeeRecords, db, { termCode, search: "Basic 9" });
+    expect(db.queries.students.or).toHaveBeenCalledWith(
+      "full_name.ilike.%Basic 9%,admission_no.ilike.%Basic 9%,grade_level.ilike.%Basic 9%",
+    );
+    expect(db.queries.fee_payments.in).toHaveBeenCalledWith("student_id", [id]);
+  });
+
+  it.each([{ offset: -1 }, { offset: 0.5 }, { limit: 101 }, { limit: 0 }])(
+    "rejects invalid pagination %j before database access", async (pagination) => {
+      const db = fees([], []);
+      await expect(invoke(listFeeRecords, db, { termCode, ...pagination })).rejects.toThrow();
+      expect(db.from).not.toHaveBeenCalled();
+    },
+  );
+
+  it("surfaces summary read failures instead of reporting zero collected", async () => {
+    const db = database({ terms: { data: { id } }, fee_payments: { error: { message: "unavailable" } } });
+    await expect(invoke(getFeeSummary, db, { termCode })).rejects.toThrow("Unable to load payments");
   });
 });

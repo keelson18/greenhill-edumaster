@@ -24,6 +24,8 @@ export const Route = createFileRoute("/_authenticated/payroll")({
       },
       { property: "og:title", content: "Payroll & HR | EduMaster" },
       { property: "og:description", content: "Staff salaries, SSNIT and income tax in cedis." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: PayrollPage,

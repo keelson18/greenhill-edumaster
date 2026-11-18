@@ -32,6 +32,8 @@ export const Route = createFileRoute("/_authenticated/transport")({
       },
       { property: "og:title", content: "Transport | EduMaster" },
       { property: "og:description", content: "Routes, vehicles, drivers and learners ferried." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: TransportPage,
